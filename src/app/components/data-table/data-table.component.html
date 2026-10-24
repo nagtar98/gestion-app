@@ -1,0 +1,20 @@
+<div class="table-container">
+  <table style="width: 100%; border-collapse: collapse; text-align: left;">
+    <thead>
+      <tr style="border-bottom: 2px solid #ccc;">
+        <th *ngFor="let col of columns" style="padding: 10px;">{{ col }}</th>
+        <th style="padding: 10px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of dataset" style="border-bottom: 1px solid #eee;">
+        <!-- Iteramos las columnas dinámicamente -->
+        <td *ngFor="let col of columns" style="padding: 10px;">{{ row[col] }}</td>
+        <td style="padding: 10px;">
+          <!-- Botón que dispara el evento Output hacia el padre[cite: 2] -->
+          <ion-button size="small" (click)="onAction(row)">Ver</ion-button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
