@@ -1,0 +1,33 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Acceso al Sistema</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Uso de marcado declarativo y Data Binding para el formulario[cite: 1, 4] -->
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    
+    <ion-item>
+      <ion-label position="floating">Correo Electrónico</ion-label>
+      <ion-input type="email" formControlName="email"></ion-input>
+    </ion-item>
+    <ion-text color="danger" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+      <p class="ion-padding-start">El formato del correo es inválido.</p>
+    </ion-text>
+
+    <ion-item>
+      <ion-label position="floating">Contraseña</ion-label>
+      <ion-input type="password" formControlName="password"></ion-input>
+    </ion-item>
+    <ion-text color="danger" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+      <p class="ion-padding-start">La contraseña debe tener al menos 6 caracteres.</p>
+    </ion-text>
+
+    <!-- Botón bloqueado mediante Data Binding unidireccional hasta que el formulario es válido[cite: 1] -->
+    <ion-button expand="block" type="submit" [disabled]="loginForm.invalid" class="ion-margin-top">
+      Iniciar Sesión
+    </ion-button>
+    
+  </form>
+</ion-content>
