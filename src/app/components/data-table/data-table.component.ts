@@ -93,4 +93,16 @@ export class DataTableComponent {
   public getFallbackAvatar(name: string): string {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=3880ff&color=fff&size=128`;
   }
+
+  /**
+   * Maneja el error de carga de imagen asignando automáticamente el avatar de iniciales accesible.
+   * @param event Evento de error emitido por el tag img.
+   * @param name Nombre del usuario para iniciales.
+   */
+  public onAvatarError(event: Event, name: string): void {
+    const target = event.target as HTMLImageElement;
+    if (target && !target.src.includes('ui-avatars.com')) {
+      target.src = this.getFallbackAvatar(name);
+    }
+  }
 }

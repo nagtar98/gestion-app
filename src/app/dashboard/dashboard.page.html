@@ -157,41 +157,48 @@
                 </ion-select>
               </ion-col>
 
-              <!-- Botones de Exportación a PDF y CSV (FASE 3 / RA 5) -->
+              <!-- Botones de Exportación a PDF y CSV (Exclusivo Administrador) -->
               <ion-col size="12" size-md="4" class="export-actions ion-text-end">
-                <ion-button
-                  fill="outline"
-                  color="danger"
-                  size="small"
-                  (click)="exportToPdf()"
-                  [disabled]="!isAdmin || isExporting"
-                  [attr.aria-label]="isAdmin ? 'Exportar tabla a formato PDF' : 'Exportación a PDF restringida a Administrador'"
-                  tabindex="0">
-                  <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
-                  <span>Exportar PDF</span>
-                </ion-button>
+                @if (isAdmin) {
+                  <ion-button
+                    fill="outline"
+                    color="danger"
+                    size="small"
+                    (click)="exportToPdf()"
+                    [disabled]="isExporting"
+                    aria-label="Exportar tabla a formato PDF"
+                    tabindex="0">
+                    <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
+                    <span>Exportar PDF</span>
+                  </ion-button>
 
-                <ion-button
-                  fill="outline"
-                  color="success"
-                  size="small"
-                  (click)="exportToCsv()"
-                  [disabled]="!isAdmin || isExporting"
-                  [attr.aria-label]="isAdmin ? 'Exportar tabla a formato CSV' : 'Exportación a CSV restringida a Administrador'"
-                  tabindex="0">
-                  <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
-                  <span>Exportar CSV</span>
-                </ion-button>
+                  <ion-button
+                    fill="outline"
+                    color="success"
+                    size="small"
+                    (click)="exportToCsv()"
+                    [disabled]="isExporting"
+                    aria-label="Exportar tabla a formato CSV"
+                    tabindex="0">
+                    <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
+                    <span>Exportar CSV</span>
+                  </ion-button>
+                } @else {
+                  <ion-badge color="medium" class="readonly-mode-badge" aria-label="Modo solo consulta">
+                    <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
+                    <span>Modo Consulta (Solo Lectura)</span>
+                  </ion-badge>
+                }
               </ion-col>
 
             </ion-row>
 
-            <!-- Aviso de restricción de permisos para rol no administrador -->
+            <!-- Aviso de permisos para rol de usuario estándar -->
             @if (!isAdmin) {
               <div class="admin-notice">
                 <small>
                   <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
-                  La descarga de informes oficiales (PDF/CSV) está reservada al rol de <strong>Administrador</strong>.
+                  Estás en <strong>Modo Consulta</strong>. La descarga de informes (PDF/CSV), alta de nuevos registros y desactivación de cuentas están reservadas al <strong>Administrador</strong>.
                 </small>
               </div>
             }
@@ -211,17 +218,18 @@
                 </ion-card-subtitle>
               </div>
 
-              <!-- Botón para dar de alta nuevo registro (FASE 1 / Paso 1.2) -->
-              <ion-button
-                color="primary"
-                size="small"
-                (click)="openCreateModal()"
-                [disabled]="!isAdmin"
-                aria-label="Dar de alta un nuevo usuario en el sistema"
-                tabindex="0">
-                <ion-icon name="person-add-outline" slot="start" aria-hidden="true"></ion-icon>
-                <span>Nuevo Registro</span>
-              </ion-button>
+              <!-- Botón para dar de alta nuevo registro (Exclusivo Administrador) -->
+              @if (isAdmin) {
+                <ion-button
+                  color="primary"
+                  size="small"
+                  (click)="openCreateModal()"
+                  aria-label="Dar de alta un nuevo usuario en el sistema"
+                  tabindex="0">
+                  <ion-icon name="person-add-outline" slot="start" aria-hidden="true"></ion-icon>
+                  <span>Nuevo Registro</span>
+                </ion-button>
+              }
             </div>
           </ion-card-header>
 
@@ -351,19 +359,58 @@
             </ion-item>
           </div>
 
-          <!-- URL de Fotografía / Avatar Opcional -->
-          <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">URL de Fotografía / Avatar (Opcional)</ion-label>
-              <ion-input
-                type="url"
-                formControlName="avatar"
-                placeholder="https://..."
-                tabindex="6">
-              </ion-input>
-            </ion-item>
+          <!-- Fotografía de Perfil con soporte para Bucket 'avatars' de Supabase -->
+          <div class="form-group ion-margin-bottom avatar-group">
+            <ion-label class="avatar-label">Fotografía de Perfil (Supabase Storage Bucket "avatars")</ion-label>
+
+            <div class="avatar-field-container">
+              @if (avatarUploadPreview || createUserForm.get('avatar')?.value) {
+                <div class="avatar-preview-box">
+                  <img
+                    [src]="avatarUploadPreview || createUserForm.get('avatar')?.value"
+                    alt="Vista previa del avatar"
+                    class="avatar-preview-thumb" />
+                </div>
+              }
+
+              <div class="avatar-inputs-box">
+                <input
+                  #avatarFileInput
+                  type="file"
+                  accept="image/*"
+                  (change)="onAvatarFileSelected($event)"
+                  style="display: none;"
+                  id="avatarFileInput" />
+
+                <ion-button
+                  type="button"
+                  fill="outline"
+                  size="small"
+                  color="secondary"
+                  (click)="avatarFileInput.click()"
+                  [disabled]="isUploadingAvatar">
+                  @if (isUploadingAvatar) {
+                    <ion-spinner name="crescent" slot="start"></ion-spinner>
+                  } @else {
+                    <ion-icon name="cloud-upload-outline" slot="start" aria-hidden="true"></ion-icon>
+                  }
+                  <span>{{ isUploadingAvatar ? 'Subiendo al Bucket...' : 'Subir Imagen al Bucket avatars' }}</span>
+                </ion-button>
+
+                <ion-item lines="inset" class="avatar-url-item">
+                  <ion-label position="floating">O URL del Bucket en Supabase</ion-label>
+                  <ion-input
+                    type="url"
+                    formControlName="avatar"
+                    placeholder="https://...supabase.co/storage/v1/object/public/avatars/..."
+                    tabindex="6">
+                  </ion-input>
+                </ion-item>
+              </div>
+            </div>
+
             <ion-note color="medium" class="ion-padding-start">
-              Si se deja vacío, se generará automáticamente un avatar con las iniciales.
+              Las imágenes se gestionan en el bucket <code>avatars</code> de Supabase. Si no se selecciona imagen, se generará un avatar accesible.
             </ion-note>
           </div>
 

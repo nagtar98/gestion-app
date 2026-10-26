@@ -42,6 +42,7 @@
                   <img
                     [src]="row[col] || getFallbackAvatar(row.nombre)"
                     [alt]="'Fotografía de ' + (row.nombre || 'usuario')"
+                    (error)="onAvatarError($event, row.nombre)"
                     class="table-user-avatar"
                     loading="lazy" />
                 </div>

@@ -48,7 +48,10 @@ import {
   checkmarkCircleOutline,
   alertCircleOutline,
   shieldCheckmarkOutline,
-  personAddOutline
+  personAddOutline,
+  cloudUploadOutline,
+  eyeOutline,
+  informationCircleOutline
 } from 'ionicons/icons';
 
 import { DataTableComponent } from '../components/data-table/data-table.component';
@@ -56,6 +59,7 @@ import { StatWidgetComponent } from '../components/stat-widget/stat-widget.compo
 import { DataService } from '../core/services/data.service';
 import { AuthService } from '../core/services/auth.service';
 import { ExportService } from '../core/services/export.service';
+import { SupabaseService } from '../core/services/supabase.service';
 import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user.model';
 import { emailUniqueValidator } from '../core/validators/auth.validators';
 
@@ -113,6 +117,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private exportService = inject(ExportService);
+  private supabaseService = inject(SupabaseService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private alertController = inject(AlertController);
@@ -126,6 +131,12 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   /** Estado de envío del formulario de alta */
   public isSubmittingUser: boolean = false;
+
+  /** Estado de subida de fotografía de perfil al bucket 'avatars' de Supabase */
+  public isUploadingAvatar: boolean = false;
+
+  /** Vista previa en base64 de la fotografía seleccionada */
+  public avatarUploadPreview: string | null = null;
 
   /** Indicador global de carga asíncrona */
   public isLoading: boolean = true;
@@ -220,7 +231,10 @@ export class DashboardPage implements OnInit, OnDestroy {
       checkmarkCircleOutline,
       alertCircleOutline,
       shieldCheckmarkOutline,
-      personAddOutline
+      personAddOutline,
+      cloudUploadOutline,
+      eyeOutline,
+      informationCircleOutline
     });
 
     // Formulario reactivo con marcado declarativo y validación asíncrona de unicidad (FASE 1 / Paso 1.2)
@@ -447,12 +461,31 @@ export class DashboardPage implements OnInit, OnDestroy {
   public async handleRowAction(user: UserRecord): Promise<void> {
     const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff`;
 
+    // Botones accesibles: el usuario base SOLO ve 'Cerrar'. La opción de activar/desactivar es exclusiva del Administrador.
+    const alertButtons: any[] = [
+      {
+        text: 'Cerrar',
+        role: 'cancel'
+      }
+    ];
+
+    if (this.isAdmin) {
+      alertButtons.push({
+        text: user.estado === 'Activo' ? 'Desactivar Usuario' : 'Activar Usuario',
+        role: 'destructive',
+        handler: () => {
+          const nuevoEstado = user.estado === 'Activo' ? 'Inactivo' : 'Activo';
+          this.toggleUserStatus(user.id, nuevoEstado);
+        }
+      });
+    }
+
     const alert = await this.alertController.create({
       header: 'Ficha del Usuario',
       subHeader: `${user.nombre} (${user.rol})`,
       message: `
         <div style="text-align: center; margin: 10px 0;">
-          <img src="${avatarUrl}" alt="Fotografía de ${user.nombre}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #3880ff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
+          <img src="${avatarUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff'" alt="Fotografía de ${user.nombre}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #3880ff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
         </div>
         <strong>ID:</strong> ${user.id}<br>
         <strong>Email:</strong> ${user.email}<br>
@@ -460,20 +493,7 @@ export class DashboardPage implements OnInit, OnDestroy {
         <strong>Estado actual:</strong> ${user.estado}<br>
         <strong>Fecha de alta:</strong> ${user.fechaAlta}
       `,
-      buttons: [
-        {
-          text: 'Cerrar',
-          role: 'cancel'
-        },
-        {
-          text: user.estado === 'Activo' ? 'Desactivar Usuario' : 'Activar Usuario',
-          role: 'destructive',
-          handler: () => {
-            const nuevoEstado = user.estado === 'Activo' ? 'Inactivo' : 'Activo';
-            this.toggleUserStatus(user.id, nuevoEstado);
-          }
-        }
-      ]
+      buttons: alertButtons
     });
 
     await alert.present();
@@ -481,10 +501,16 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   /**
    * Conmuta el estado del usuario simulando una llamada de actualización contra la API relacional o Supabase.
+   * Restringido exclusivamente al Administrador.
    * @param userId Identificador del usuario.
    * @param newStatus Nuevo estado a establecer.
    */
   private toggleUserStatus(userId: number, newStatus: 'Activo' | 'Inactivo'): void {
+    if (!this.isAdmin) {
+      this.showToast('Acción no permitida: Solo el Administrador puede modificar estados de usuario.');
+      return;
+    }
+
     this.dataService.updateUserStatus(userId, newStatus).subscribe({
       next: (updated) => {
         const index = this.allUsers.findIndex(u => u.id === userId);
@@ -503,8 +529,15 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   /**
    * Abre el modal de alta de nuevo registro de usuario.
+   * Restringido exclusivamente al Administrador.
    */
   public openCreateModal(): void {
+    if (!this.isAdmin) {
+      this.showToast('Acción restringida: Solo el Administrador puede registrar usuarios.');
+      return;
+    }
+
+    this.avatarUploadPreview = null;
     this.createUserForm.reset({
       nombre: '',
       email: '',
@@ -522,13 +555,58 @@ export class DashboardPage implements OnInit, OnDestroy {
    */
   public closeCreateModal(): void {
     this.isCreateModalOpen = false;
+    this.avatarUploadPreview = null;
     this.cdr.markForCheck();
   }
 
   /**
+   * Sube una fotografía seleccionada directamente al Storage Bucket 'avatars' de Supabase.
+   * @param event Evento change del input de tipo file.
+   */
+  public async onAvatarFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+    
+    // Generar vista previa local en base64
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.avatarUploadPreview = reader.result as string;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
+
+    // Subir al Storage Bucket 'avatars' de Supabase si está activo
+    if (this.supabaseService.isConfigured()) {
+      this.isUploadingAvatar = true;
+      this.cdr.markForCheck();
+      try {
+        const publicUrl = await this.supabaseService.uploadAvatar(file);
+        this.createUserForm.patchValue({ avatar: publicUrl });
+        this.showToast('Fotografía subida exitosamente al bucket "avatars" de Supabase.');
+      } catch (err: any) {
+        console.warn('Aviso al subir imagen a Supabase Storage:', err);
+        this.showToast('Aviso: Verifique que el bucket "avatars" esté creado en Supabase.');
+      } finally {
+        this.isUploadingAvatar = false;
+        this.cdr.markForCheck();
+      }
+    }
+  }
+
+  /**
    * Procesa la inserción del nuevo usuario validando el formulario reactivo.
+   * Restringido exclusivamente al Administrador.
    */
   public onCreateUserSubmit(): void {
+    if (!this.isAdmin) {
+      this.showToast('Acción restringida: Solo el Administrador puede dar de alta usuarios.');
+      return;
+    }
+
     if (this.createUserForm.invalid || this.isSubmittingUser) {
       this.createUserForm.markAllAsTouched();
       this.cdr.markForCheck();

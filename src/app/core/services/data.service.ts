@@ -37,7 +37,7 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Desarrollo',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_1.png',
       fechaAlta: '2023-01-15'
     },
     {
@@ -47,7 +47,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Soporte',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_2.png',
       fechaAlta: '2023-03-22'
     },
     {
@@ -57,7 +57,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Ventas',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_3.png',
       fechaAlta: '2023-05-10'
     },
     {
@@ -67,7 +67,7 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Finanzas',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_4.png',
       fechaAlta: '2023-07-18'
     },
     {
@@ -77,7 +77,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Desarrollo',
       estado: 'Inactivo',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_5.png',
       fechaAlta: '2023-09-01'
     },
     {
@@ -87,7 +87,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Marketing',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_6.png',
       fechaAlta: '2023-11-04'
     },
     {
@@ -97,7 +97,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Ventas',
       estado: 'Activo',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_7.png',
       fechaAlta: '2024-01-12'
     },
     {
@@ -107,7 +107,7 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Soporte',
       estado: 'Inactivo',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      avatar: 'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/avatar_8.png',
       fechaAlta: '2024-02-28'
     }
   ];
