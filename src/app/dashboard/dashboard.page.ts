@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
@@ -26,6 +26,11 @@ import {
   IonButtons,
   IonModal,
   IonToast,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonText,
+  IonNote,
   AlertController
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -42,7 +47,8 @@ import {
   logOutOutline,
   checkmarkCircleOutline,
   alertCircleOutline,
-  shieldCheckmarkOutline
+  shieldCheckmarkOutline,
+  personAddOutline
 } from 'ionicons/icons';
 
 import { DataTableComponent } from '../components/data-table/data-table.component';
@@ -51,12 +57,14 @@ import { DataService } from '../core/services/data.service';
 import { AuthService } from '../core/services/auth.service';
 import { ExportService } from '../core/services/export.service';
 import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user.model';
+import { emailUniqueValidator } from '../core/validators/auth.validators';
 
 /**
  * @fileoverview Controlador principal del Cuadro de Mando Empresarial (FASE 3 / RA 5).
  * Orquesta de forma asíncrona la concurrencia de fuentes duales (SQL y NoSQL en tiempo real o Supabase en la nube)
  * mediante RxJS forkJoin con soporte para Spinners de carga.
  * Implementa ChangeDetectionStrategy.OnPush, exportación a PDF y CSV, filtrado reactivo,
+ * formulario reactivo de alta con validación asíncrona (FASE 1 / Paso 1.2),
  * renderizado de imágenes de perfil y manual de usuario embebido con cumplimiento integral WCAG (RA 4, RA 6).
  * @module Dashboard/DashboardPage
  */
@@ -69,6 +77,7 @@ import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     DataTableComponent,
     StatWidgetComponent,
     IonHeader,
@@ -92,7 +101,12 @@ import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user
     IonSelectOption,
     IonButtons,
     IonModal,
-    IonToast
+    IonToast,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonText,
+    IonNote
   ]
 })
 export class DashboardPage implements OnInit, OnDestroy {
@@ -102,6 +116,16 @@ export class DashboardPage implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private alertController = inject(AlertController);
+  private fb = inject(FormBuilder);
+
+  /** Formulario reactivo para alta de nuevo usuario con validación asíncrona (Paso 1.2) */
+  public createUserForm: FormGroup;
+
+  /** Control de visibilidad del modal de alta de usuario */
+  public isCreateModalOpen: boolean = false;
+
+  /** Estado de envío del formulario de alta */
+  public isSubmittingUser: boolean = false;
 
   /** Indicador global de carga asíncrona */
   public isLoading: boolean = true;
@@ -195,7 +219,25 @@ export class DashboardPage implements OnInit, OnDestroy {
       logOutOutline,
       checkmarkCircleOutline,
       alertCircleOutline,
-      shieldCheckmarkOutline
+      shieldCheckmarkOutline,
+      personAddOutline
+    });
+
+    // Formulario reactivo con marcado declarativo y validación asíncrona de unicidad (FASE 1 / Paso 1.2)
+    this.createUserForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      email: [
+        '',
+        {
+          validators: [Validators.required, Validators.email],
+          asyncValidators: [emailUniqueValidator(this.authService)],
+          updateOn: 'change'
+        }
+      ],
+      rol: ['Usuario Estandar', [Validators.required]],
+      departamento: ['Desarrollo', [Validators.required]],
+      estado: ['Activo', [Validators.required]],
+      avatar: ['']
     });
   }
 
@@ -457,6 +499,78 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.showToast('No se pudo actualizar el estado del usuario.');
       }
     });
+  }
+
+  /**
+   * Abre el modal de alta de nuevo registro de usuario.
+   */
+  public openCreateModal(): void {
+    this.createUserForm.reset({
+      nombre: '',
+      email: '',
+      rol: 'Usuario Estandar',
+      departamento: 'Desarrollo',
+      estado: 'Activo',
+      avatar: ''
+    });
+    this.isCreateModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Cierra el modal de alta de usuario.
+   */
+  public closeCreateModal(): void {
+    this.isCreateModalOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Procesa la inserción del nuevo usuario validando el formulario reactivo.
+   */
+  public onCreateUserSubmit(): void {
+    if (this.createUserForm.invalid || this.isSubmittingUser) {
+      this.createUserForm.markAllAsTouched();
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.isSubmittingUser = true;
+    this.cdr.markForCheck();
+
+    const formVal = this.createUserForm.value;
+    const newRecord: Omit<UserRecord, 'id'> = {
+      nombre: formVal.nombre.trim(),
+      email: formVal.email.trim().toLowerCase(),
+      rol: formVal.rol,
+      departamento: formVal.departamento,
+      estado: formVal.estado,
+      avatar: formVal.avatar?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(formVal.nombre)}&background=3880ff&color=fff`,
+      fechaAlta: new Date().toISOString().split('T')[0]
+    };
+
+    this.dataService.createUser(newRecord).subscribe({
+      next: (created) => {
+        this.isSubmittingUser = false;
+        this.closeCreateModal();
+        this.showToast(`Usuario "${created.nombre}" creado exitosamente.`);
+        this.loadDashboardData();
+      },
+      error: (err) => {
+        console.error('Error al registrar usuario:', err);
+        this.isSubmittingUser = false;
+        this.showToast('Error al dar de alta el usuario.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  /**
+   * Comprueba si la validación asíncrona de email está pendiente en el alta.
+   */
+  public get isNewEmailValidating(): boolean {
+    const ctrl = this.createUserForm.get('email');
+    return ctrl ? ctrl.pending : false;
   }
 
   /**

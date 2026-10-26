@@ -239,4 +239,28 @@ export class DataService {
 
     return of({ ...target }).pipe(delay(300));
   }
+
+  /**
+   * Da de alta un nuevo registro de usuario en Supabase o en el catálogo local (FASE 1 / Paso 1.2).
+   * @param newUser Datos del usuario a dar de alta.
+   * @returns Observable con el usuario insertado.
+   */
+  public createUser(newUser: Omit<UserRecord, 'id'>): Observable<UserRecord> {
+    if (this.supabaseService.isConfigured()) {
+      return from(this.supabaseService.createUser(newUser)).pipe(
+        catchError(err => {
+          console.warn('Fallo al dar de alta en Supabase, registrando en memoria local:', err);
+          const nextId = Math.max(...this.mockSqlUsers.map(u => u.id), 0) + 1;
+          const localRecord: UserRecord = { id: nextId, ...newUser };
+          this.mockSqlUsers.push(localRecord);
+          return of(localRecord);
+        })
+      );
+    }
+
+    const nextId = Math.max(...this.mockSqlUsers.map(u => u.id), 0) + 1;
+    const localRecord: UserRecord = { id: nextId, ...newUser };
+    this.mockSqlUsers.push(localRecord);
+    return of(localRecord).pipe(delay(400));
+  }
 }

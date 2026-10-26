@@ -210,6 +210,18 @@
                   Mostrando {{ filteredUsers.length }} de {{ allUsers.length }} registros disponibles
                 </ion-card-subtitle>
               </div>
+
+              <!-- Botón para dar de alta nuevo registro (FASE 1 / Paso 1.2) -->
+              <ion-button
+                color="primary"
+                size="small"
+                (click)="openCreateModal()"
+                [disabled]="!isAdmin"
+                aria-label="Dar de alta un nuevo usuario en el sistema"
+                tabindex="0">
+                <ion-icon name="person-add-outline" slot="start" aria-hidden="true"></ion-icon>
+                <span>Nuevo Registro</span>
+              </ion-button>
             </div>
           </ion-card-header>
 
@@ -227,6 +239,150 @@
 
     </main>
   }
+
+  <!-- Modal Accesible: Formulario Reactivo de Alta de Registro (FASE 1 / Paso 1.2) -->
+  <ion-modal [isOpen]="isCreateModalOpen" (didDismiss)="closeCreateModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Alta de Nuevo Usuario</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeCreateModal()" aria-label="Cerrar modal de alta">
+              <ion-icon name="close-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="createUserForm" (ngSubmit)="onCreateUserSubmit()" novalidate aria-label="Formulario de alta de nuevo empleado">
+          
+          <!-- Nombre Completo -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">Nombre Completo *</ion-label>
+              <ion-input
+                type="text"
+                formControlName="nombre"
+                aria-required="true"
+                tabindex="1">
+              </ion-input>
+            </ion-item>
+            @if (createUserForm.get('nombre')?.invalid && createUserForm.get('nombre')?.touched) {
+              <ion-text color="danger">
+                <p class="error-text">El nombre es obligatorio y debe tener al menos 3 caracteres.</p>
+              </ion-text>
+            }
+          </div>
+
+          <!-- Correo Electrónico con Validación Asíncrona de Unicidad -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">Correo Electrónico *</ion-label>
+              <ion-input
+                type="email"
+                formControlName="email"
+                aria-required="true"
+                tabindex="2">
+              </ion-input>
+              @if (isNewEmailValidating) {
+                <ion-spinner slot="end" name="crescent" color="primary"></ion-spinner>
+              }
+            </ion-item>
+
+            <div role="alert" aria-live="polite">
+              @if (isNewEmailValidating) {
+                <ion-note color="primary" class="status-note">
+                  <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+                  Comprobando disponibilidad del correo en Supabase...
+                </ion-note>
+              }
+              @if (createUserForm.get('email')?.hasError('required') && createUserForm.get('email')?.touched) {
+                <ion-text color="danger">
+                  <p class="error-text">El correo electrónico es obligatorio.</p>
+                </ion-text>
+              }
+              @if (createUserForm.get('email')?.hasError('email') && createUserForm.get('email')?.touched) {
+                <ion-text color="danger">
+                  <p class="error-text">El formato del correo es inválido.</p>
+                </ion-text>
+              }
+              @if (createUserForm.get('email')?.hasError('emailAlreadyExists') && createUserForm.get('email')?.touched && !isNewEmailValidating) {
+                <ion-text color="danger">
+                  <p class="error-text">Este correo ya está registrado en el sistema. Debe ser único.</p>
+                </ion-text>
+              }
+            </div>
+          </div>
+
+          <!-- Rol de Acceso -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">Rol de Acceso *</ion-label>
+              <ion-select formControlName="rol" interface="popover" tabindex="3">
+                <ion-select-option value="Usuario Estandar">Usuario Estándar</ion-select-option>
+                <ion-select-option value="Administrador">Administrador</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
+
+          <!-- Departamento -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">Departamento *</ion-label>
+              <ion-select formControlName="departamento" interface="popover" tabindex="4">
+                <ion-select-option value="Desarrollo">Desarrollo</ion-select-option>
+                <ion-select-option value="Soporte">Soporte</ion-select-option>
+                <ion-select-option value="Ventas">Ventas</ion-select-option>
+                <ion-select-option value="Marketing">Marketing</ion-select-option>
+                <ion-select-option value="Finanzas">Finanzas</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
+
+          <!-- Estado Operativo -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">Estado Inicial *</ion-label>
+              <ion-select formControlName="estado" interface="popover" tabindex="5">
+                <ion-select-option value="Activo">Activo</ion-select-option>
+                <ion-select-option value="Inactivo">Inactivo</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </div>
+
+          <!-- URL de Fotografía / Avatar Opcional -->
+          <div class="form-group ion-margin-bottom">
+            <ion-item lines="inset">
+              <ion-label position="floating">URL de Fotografía / Avatar (Opcional)</ion-label>
+              <ion-input
+                type="url"
+                formControlName="avatar"
+                placeholder="https://..."
+                tabindex="6">
+              </ion-input>
+            </ion-item>
+            <ion-note color="medium" class="ion-padding-start">
+              Si se deja vacío, se generará automáticamente un avatar con las iniciales.
+            </ion-note>
+          </div>
+
+          <!-- Botón de Envío -->
+          <ion-button
+            expand="block"
+            type="submit"
+            [disabled]="createUserForm.invalid || isSubmittingUser || isNewEmailValidating"
+            class="ion-margin-top"
+            tabindex="7">
+            @if (isSubmittingUser) {
+              <ion-spinner name="crescent" slot="start"></ion-spinner>
+            }
+            <span>{{ isSubmittingUser ? 'Registrando en Supabase...' : 'Guardar Nuevo Registro' }}</span>
+          </ion-button>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 
   <!-- Modal Accesible: Sistema de Ayuda y Manual de Usuario Embebido (FASE 5 / RA 6) -->
   <ion-modal [isOpen]="isHelpModalOpen" (didDismiss)="closeHelpModal()">
@@ -254,19 +410,19 @@
           <h2>2. Control de Acceso por Roles (RBAC)</h2>
           <ul>
             <li>
-              <strong>Administrador:</strong> Acceso ilimitado a todas las funcionalidades, visualización de métricas
-              consolidadas y exportación de informes oficiales en formatos <strong>PDF</strong> y <strong>CSV</strong>.
+              <strong>Administrador:</strong> Acceso ilimitado a todas las funcionalidades, alta de nuevos registros,
+              visualización de métricas consolidadas y exportación de informes oficiales en formatos <strong>PDF</strong> y <strong>CSV</strong>.
             </li>
             <li>
               <strong>Usuario Estándar:</strong> Consulta de personal y métricas analíticas. Las opciones de descarga
-              de informes permanecen protegidas y desactivadas.
+              de informes y alta de empleados permanecen protegidas y desactivadas.
             </li>
           </ul>
 
           <h2>3. Cuadro de Mando y Visualización</h2>
           <p>
-            Los widgets estadísticos reflejan la distribución por departamento y la proporción de roles. Al escribir
-            en el buscador o cambiar el departamento, los datos y gráficos se recalculan en tiempo real de forma reactiva.
+            Los widgets estadísticos reflejan la distribución por departamento (línea con área suave) y la proporción de roles (anillo/doughnut).
+            Al escribir en el buscador o cambiar el departamento, los datos y gráficos se recalculan en tiempo real de forma reactiva.
           </p>
 
           <h2>4. Generación y Descarga de Informes</h2>

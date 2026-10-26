@@ -4,13 +4,13 @@ import { map, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 /**
- * @fileoverview Validadores asíncronos para formularios reactivos de autenticación.
+ * @fileoverview Validadores asíncronos para formularios reactivos de autenticación y alta de registros.
  * Permite comprobar la existencia o unicidad de cuentas en backend/base de datos.
  * @module Core/Validators/AuthValidators
  */
 
 /**
- * Fabrica un validador asíncrono para verificar si un correo electrónico existe en la base de datos.
+ * Fabrica un validador asíncrono para verificar si un correo electrónico existe en la base de datos (Login).
  * Aplica una pausa (debounce) de 400ms antes de emitir la petición para optimizar el rendimiento.
  *
  * @param authService Servicio de autenticación inyectado con métodos de consulta.
@@ -42,6 +42,37 @@ export function emailExistsValidator(authService: AuthService): AsyncValidatorFn
         // En caso de fallo de red en la validación asíncrona, no bloquear pero informar
         return of({ verificationFailed: true });
       })
+    );
+  };
+}
+
+/**
+ * Fabrica un validador asíncrono para verificar la unicidad de un correo (Alta de nuevo registro).
+ * Comprueba que el correo NO exista previamente en la base de datos (Supabase).
+ *
+ * @param authService Servicio de autenticación inyectado.
+ * @returns Función de validación asíncrona que emite { emailAlreadyExists: true } si ya existe.
+ */
+export function emailUniqueValidator(authService: AuthService): AsyncValidatorFn {
+  return (control: AbstractControl): Observable<ValidationErrors | null> => {
+    const value = control.value;
+
+    if (!value || typeof value !== 'string' || value.trim().length === 0) {
+      return of(null);
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      return of(null);
+    }
+
+    return timer(400).pipe(
+      switchMap(() => authService.checkEmailExists(value)),
+      map(exists => {
+        // En el flujo de Alta de registro, el correo NO debe existir
+        return exists ? { emailAlreadyExists: true } : null;
+      }),
+      catchError(() => of(null))
     );
   };
 }

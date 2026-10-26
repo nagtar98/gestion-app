@@ -127,4 +127,46 @@ export class SupabaseService {
 
     return (data && data.length > 0);
   }
+
+  /**
+   * Da de alta un nuevo usuario en la tabla 'usuarios' de Supabase (FASE 1 / Paso 1.2).
+   * @param user Datos del nuevo usuario a registrar.
+   * @returns Promesa con el registro insertado incluyendo su nuevo ID autonumérico.
+   */
+  public async createUser(user: Omit<UserRecord, 'id'>): Promise<UserRecord> {
+    if (!this.supabase) {
+      throw new Error('Supabase no está configurado.');
+    }
+
+    const { data, error } = await this.supabase
+      .from('usuarios')
+      .insert([
+        {
+          nombre: user.nombre,
+          email: user.email,
+          rol: user.rol,
+          departamento: user.departamento,
+          estado: user.estado,
+          avatar_url: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff`,
+          fecha_alta: user.fechaAlta || new Date().toISOString().split('T')[0]
+        }
+      ])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    const inserted = data[0];
+    return {
+      id: Number(inserted.id),
+      nombre: String(inserted.nombre),
+      email: String(inserted.email),
+      rol: inserted.rol as UserRole,
+      departamento: String(inserted.departamento),
+      estado: inserted.estado as 'Activo' | 'Inactivo',
+      avatar: inserted.avatar_url,
+      fechaAlta: inserted.fecha_alta
+    };
+  }
 }
