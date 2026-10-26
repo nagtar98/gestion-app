@@ -9,7 +9,7 @@ export const environment = {
    * Sustituye estos valores con la URL y la Anon Key de tu proyecto en Supabase (Settings -> API).
    */
   supabase: {
-    url: 'https://xyzcompany.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.simulated-anon-key'
+    url: 'https://nembeporhkhneggqrtli.supabase.co',
+    anonKey: 'sb_publishable_SiBY-_MjCGBFZfYuiKdQwg_RzUUocR_'
   }
 };
