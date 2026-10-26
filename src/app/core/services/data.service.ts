@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { Observable, forkJoin, of, throwError } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { Observable, forkJoin, from, of, throwError } from 'rxjs';
 import { delay, map, catchError } from 'rxjs/operators';
 import { DashboardDataPayload, DepartmentMetric, MetricSummary, UserRecord } from '../models/user.model';
+import { SupabaseService } from './supabase.service';
 
 /**
  * Configuración para conexión con backend Supabase (si está configurado).
@@ -14,24 +15,19 @@ export interface SupabaseConfig {
 /**
  * @fileoverview Servicio de concurrencia y orquestación asíncrona de orígenes de datos.
  * Simula el consumo dual de fuentes exigido en la FASE 3 (RA 5):
- * 1. API REST basada en base de datos relacional (SQL) para entidades tabulares.
+ * 1. API REST basada en base de datos relacional (SQL) o conexión real a Supabase en la nube.
  * 2. Servicio NoSQL / en tiempo real documental para métricas de cuadro de mando.
- * Dispone además de arquitectura extensible preparada para cliente Supabase.
+ * Dispone de integración nativa con imágenes y fotos de perfil en la nube.
  * @module Core/Services/DataService
  */
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-  /** Configuración opcional para cliente Supabase */
-  private supabaseConfig: SupabaseConfig = {
-    supabaseUrl: 'https://xyzcompany.supabase.co',
-    supabaseAnonKey: 'public-anon-key-simulated-token'
-  };
+  private supabaseService = inject(SupabaseService);
 
   /**
-   * Dataset representativo de la fuente Relacional (SQL).
-   * Esquema normalizado de usuarios empresariales.
+   * Dataset representativo de la fuente Relacional (SQL) enriquecido con imágenes de perfil.
    */
   private mockSqlUsers: UserRecord[] = [
     {
@@ -41,6 +37,7 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Desarrollo',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
       fechaAlta: '2023-01-15'
     },
     {
@@ -50,6 +47,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Soporte',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
       fechaAlta: '2023-03-22'
     },
     {
@@ -59,6 +57,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Ventas',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
       fechaAlta: '2023-05-10'
     },
     {
@@ -68,6 +67,7 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Finanzas',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
       fechaAlta: '2023-07-18'
     },
     {
@@ -77,6 +77,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Desarrollo',
       estado: 'Inactivo',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
       fechaAlta: '2023-09-01'
     },
     {
@@ -86,6 +87,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Marketing',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
       fechaAlta: '2023-11-04'
     },
     {
@@ -95,6 +97,7 @@ export class DataService {
       rol: 'Usuario Estandar',
       departamento: 'Ventas',
       estado: 'Activo',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
       fechaAlta: '2024-01-12'
     },
     {
@@ -104,13 +107,13 @@ export class DataService {
       rol: 'Administrador',
       departamento: 'Soporte',
       estado: 'Inactivo',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       fechaAlta: '2024-02-28'
     }
   ];
 
   /**
    * Dataset representativo de la fuente NoSQL / Firestore / Documental en tiempo real.
-   * Agrupaciones métricas de dotación y rendimiento departamental.
    */
   private mockNoSqlDepartmentMetrics: DepartmentMetric[] = [
     { departamento: 'Ventas', cantidad: 35 },
@@ -123,22 +126,24 @@ export class DataService {
   constructor() {}
 
   /**
-   * Consume de forma asíncrona la fuente relacional (SQL REST API).
-   * Simula latencia de red, serialización JSON y control de excepciones.
-   * @returns Observable con la colección completa de registros de usuarios.
+   * Consume la fuente relacional (SQL REST API o Supabase si está enlazado).
+   * Si Supabase está configurado, consume la tabla real de la nube; en caso contrario,
+   * sirve el mock con imágenes con un retardo realista de 800ms.
+   * @returns Observable con el listado de usuarios con imágenes.
    */
   public getUsersFromRelationalDb(): Observable<UserRecord[]> {
-    // Clonamos profundamente para asegurar inmutabilidad
-    const clonedData = JSON.parse(JSON.stringify(this.mockSqlUsers)) as UserRecord[];
-    
+    if (this.supabaseService.isConfigured()) {
+      return from(this.supabaseService.getUsers()).pipe(
+        catchError(err => {
+          console.warn('Fallo al conectar con Supabase en la nube, activando fallback local:', err);
+          return of(JSON.parse(JSON.stringify(this.mockSqlUsers)) as UserRecord[]);
+        })
+      );
+    }
+
     // Retardo asíncrono realista (800ms) simulando conexión a base de datos remota
-    return of(clonedData).pipe(
-      delay(800),
-      catchError(error => {
-        console.error('Error al consumir API Relacional (SQL):', error);
-        return throwError(() => new Error('Error al conectar con la fuente de datos relacional.'));
-      })
-    );
+    const clonedData = JSON.parse(JSON.stringify(this.mockSqlUsers)) as UserRecord[];
+    return of(clonedData).pipe(delay(800));
   }
 
   /**
@@ -213,7 +218,7 @@ export class DataService {
   }
 
   /**
-   * Actualiza el estado de un usuario simulando una transacción SQL PATCH / PUT.
+   * Actualiza el estado de un usuario simulando una transacción SQL o sincronizando con Supabase.
    * @param id Identificador único del usuario.
    * @param nuevoEstado 'Activo' | 'Inactivo'.
    * @returns Observable con el usuario actualizado.
@@ -224,13 +229,14 @@ export class DataService {
       return throwError(() => new Error(`Usuario con ID ${id} no encontrado.`));
     }
     target.estado = nuevoEstado;
-    return of({ ...target }).pipe(delay(300));
-  }
 
-  /**
-   * Retorna la configuración de cliente Supabase preparada para integración directa.
-   */
-  public getSupabaseConfiguration(): SupabaseConfig {
-    return { ...this.supabaseConfig };
+    if (this.supabaseService.isConfigured()) {
+      return from(this.supabaseService.updateUserStatus(id, nuevoEstado)).pipe(
+        map(() => ({ ...target })),
+        catchError(() => of({ ...target }))
+      );
+    }
+
+    return of({ ...target }).pipe(delay(300));
   }
 }

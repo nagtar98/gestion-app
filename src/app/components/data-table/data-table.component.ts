@@ -7,7 +7,7 @@ import { eyeOutline, personOutline } from 'ionicons/icons';
 /**
  * @fileoverview Componente genérico y agnóstico de tabla de datos avanzada (FASE 2 / RA 3).
  * Recibe datos mediante @Input unidireccionales y emite interacciones al padre mediante @Output.
- * Implementa ChangeDetectionStrategy.OnPush y normativas de accesibilidad WAI-ARIA (RA 4).
+ * Implementa ChangeDetectionStrategy.OnPush, renderizado accesible de imágenes de perfil y WAI-ARIA (RA 4).
  * @module Components/DataTableComponent
  */
 @Component({
@@ -62,6 +62,15 @@ export class DataTableComponent {
   }
 
   /**
+   * Identifica si la columna corresponde a una fotografía o avatar.
+   * @param col Clave de la columna.
+   */
+  public isAvatarColumn(col: string): boolean {
+    const key = col.toLowerCase();
+    return key === 'avatar' || key === 'foto' || key === 'avatar_url' || key === 'imagen';
+  }
+
+  /**
    * Identifica si un valor corresponde a un estado que deba estilizarse con badge.
    * @param col Clave de la columna.
    */
@@ -75,5 +84,13 @@ export class DataTableComponent {
    */
   public isRoleColumn(col: string): boolean {
     return col.toLowerCase() === 'rol';
+  }
+
+  /**
+   * Genera un avatar accesible por iniciales si la imagen remota no está disponible o falla.
+   * @param name Nombre del usuario.
+   */
+  public getFallbackAvatar(name: string): string {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=3880ff&color=fff&size=128`;
   }
 }

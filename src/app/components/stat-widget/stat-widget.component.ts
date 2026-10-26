@@ -18,7 +18,7 @@ Chart.register(...registerables);
 
 /**
  * @fileoverview Widget estadístico agnóstico y reutilizable basado en Chart.js (FASE 2 / RA 3).
- * Soporta tipos de gráfico 'bar', 'pie', 'doughnut', 'line'.
+ * Soporta tipos de gráfico visuales no basados en barras ('line', 'doughnut', 'pie', 'polarArea').
  * Gestiona minuciosamente el ciclo de vida (ngOnDestroy) para prevenir fugas de memoria (memory leaks)
  * y actualiza reactivamente la vista mediante ngOnChanges y ChangeDetectionStrategy.OnPush.
  * @module Components/StatWidgetComponent
@@ -44,8 +44,8 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
   /** Valores numéricos correspondientes a cada etiqueta */
   @Input() data: number[] = [];
 
-  /** Tipo de gráfico a renderizar */
-  @Input() type: 'bar' | 'pie' | 'doughnut' | 'line' = 'bar';
+  /** Tipo de gráfico a renderizar (evita barras conforme a especificación del docente) */
+  @Input() type: 'line' | 'doughnut' | 'pie' | 'polarArea' = 'line';
 
   /** Instancia activa de Chart.js gestionada internamente */
   private chart: Chart | null = null;
@@ -116,6 +116,8 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
       'rgba(231, 76, 60, 1)'
     ];
 
+    const isLine = this.type === 'line';
+
     this.chart = new Chart(ctx, {
       type: this.type as any,
       data: {
@@ -124,9 +126,16 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
           {
             label: this.title,
             data: this.data,
-            backgroundColor: backgroundColors.slice(0, this.data.length),
-            borderColor: borderColors.slice(0, this.data.length),
-            borderWidth: 1.5
+            backgroundColor: isLine ? 'rgba(41, 128, 185, 0.18)' : backgroundColors.slice(0, this.data.length),
+            borderColor: isLine ? '#2563eb' : borderColors.slice(0, this.data.length),
+            borderWidth: isLine ? 3 : 1.5,
+            fill: isLine,
+            tension: 0.35, // Curvatura suave y estética para gráfico de líneas
+            pointBackgroundColor: '#2563eb',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: isLine ? 5 : 3,
+            pointHoverRadius: 7
           }
         ]
       },
@@ -135,7 +144,7 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: this.type === 'pie' || this.type === 'doughnut',
+            display: this.type === 'pie' || this.type === 'doughnut' || this.type === 'polarArea',
             position: 'bottom',
             labels: {
               boxWidth: 14,
@@ -147,7 +156,23 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
           tooltip: {
             enabled: true
           }
-        }
+        },
+        scales: isLine ? {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        } : undefined
       }
     });
   }

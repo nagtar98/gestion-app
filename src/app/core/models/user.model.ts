@@ -25,6 +25,8 @@ export interface UserRecord {
   departamento: string;
   /** Estado operativo de la cuenta */
   estado: 'Activo' | 'Inactivo';
+  /** URL de la fotografía o avatar del usuario almacenada en Supabase o CDN */
+  avatar?: string;
   /** Fecha de registro o alta en el sistema (formato ISO/cadena legible) */
   fechaAlta: string;
 }

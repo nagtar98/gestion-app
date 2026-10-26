@@ -1,17 +1,21 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
+import { Injectable, inject } from '@angular/core';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { delay, map, switchMap, catchError } from 'rxjs/operators';
 import { AuthUser, UserRole } from '../models/user.model';
+import { SupabaseService } from './supabase.service';
 
 /**
  * @fileoverview Servicio central de autenticación y gestión de estado de sesión.
- * Implementa el patrón Singleton con persistencia en localStorage y emisión de estado reactivo.
+ * Implementa el patrón Singleton con persistencia en localStorage, emisión de estado reactivo
+ * y compatibilidad dual con catálogo local o base de datos Supabase en la nube.
  * @module Core/Services/AuthService
  */
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private supabaseService = inject(SupabaseService);
+
   /** Clave de persistencia para el rol de usuario en localStorage */
   private readonly ROLE_STORAGE_KEY = 'userRole';
   /** Clave de persistencia para el token de sesión en localStorage */
@@ -20,8 +24,7 @@ export class AuthService {
   private readonly USER_STORAGE_KEY = 'authUserData';
 
   /**
-   * Catálogo simulado de usuarios registrados en el sistema para autenticación.
-   * Contiene credenciales de prueba para Administrador y Usuario Estándar.
+   * Catálogo simulado de usuarios registrados en el sistema para autenticación rápida.
    */
   private readonly mockRegisteredUsers: Array<{
     email: string;
@@ -89,16 +92,34 @@ export class AuthService {
   }
 
   /**
-   * Validador asíncrono simulado contra base de datos.
+   * Validador asíncrono contra base de datos (Supabase en la nube o catálogo local).
    * Comprueba si una dirección de correo electrónico ya existe registrada en el sistema.
    * @param email Correo electrónico a verificar.
    * @returns Observable que emite true si el correo existe, false en caso contrario.
    */
   public checkEmailExists(email: string): Observable<boolean> {
     const normalized = (email || '').trim().toLowerCase();
+
+    // 1. Si Supabase está enlazado, comprobamos contra la base de datos PostgreSQL real
+    if (this.supabaseService.isConfigured()) {
+      return from(this.supabaseService.checkEmailExists(normalized)).pipe(
+        switchMap(existsInCloud => {
+          if (existsInCloud) {
+            return of(true);
+          }
+          // Comprobar también cuentas demo de respaldo
+          const existsLocal = this.mockRegisteredUsers.some(u => u.email.toLowerCase() === normalized);
+          return of(existsLocal);
+        }),
+        catchError(() => {
+          const existsLocal = this.mockRegisteredUsers.some(u => u.email.toLowerCase() === normalized);
+          return of(existsLocal);
+        })
+      );
+    }
+
+    // 2. Modo catálogo local simulado con retardo de red de 600ms
     const exists = this.mockRegisteredUsers.some(u => u.email.toLowerCase() === normalized);
-    
-    // Retardo asíncrono realista de 600 ms para simular llamada de red/BD
     return of(exists).pipe(delay(600));
   }
 

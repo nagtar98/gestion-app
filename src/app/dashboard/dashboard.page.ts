@@ -54,10 +54,10 @@ import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user
 
 /**
  * @fileoverview Controlador principal del Cuadro de Mando Empresarial (FASE 3 / RA 5).
- * Orquesta de forma asíncrona la concurrencia de fuentes duales (SQL y NoSQL en tiempo real)
+ * Orquesta de forma asíncrona la concurrencia de fuentes duales (SQL y NoSQL en tiempo real o Supabase en la nube)
  * mediante RxJS forkJoin con soporte para Spinners de carga.
- * Implementa ChangeDetectionStrategy.OnPush, exportación a PDF y CSV, filtrado reactivo
- * y manual de usuario embebido con cumplimiento integral WCAG (RA 4, RA 6).
+ * Implementa ChangeDetectionStrategy.OnPush, exportación a PDF y CSV, filtrado reactivo,
+ * renderizado de imágenes de perfil y manual de usuario embebido con cumplimiento integral WCAG (RA 4, RA 6).
  * @module Dashboard/DashboardPage
  */
 @Component({
@@ -109,7 +109,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Estado de exportación en progreso */
   public isExporting: boolean = false;
 
-  /** Colección íntegra de usuarios obtenida de la fuente SQL */
+  /** Colección íntegra de usuarios obtenida de la fuente SQL o Supabase */
   public allUsers: UserRecord[] = [];
 
   /** Subconjunto de usuarios tras aplicar filtros en tiempo real */
@@ -135,12 +135,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Lista disponible de departamentos para el selector */
   public departmentsList: string[] = ['TODOS'];
 
-  /** Columnas técnicas a proyectar en el DataTableComponent */
-  public tableColumns: string[] = ['id', 'nombre', 'email', 'rol', 'departamento', 'estado'];
+  /** Columnas técnicas a proyectar en el DataTableComponent (incluye imagen/avatar) */
+  public tableColumns: string[] = ['avatar', 'nombre', 'email', 'rol', 'departamento', 'estado'];
 
   /** Mapeo de cabeceras legibles para accesibilidad y visualización */
   public columnLabels: Record<string, string> = {
-    id: 'ID',
+    avatar: 'Foto',
     nombre: 'Nombre Completo',
     email: 'Correo Electrónico',
     rol: 'Rol de Acceso',
@@ -234,7 +234,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Orquesta de forma asíncrona la recuperación concurrente de datos (SQL + NoSQL).
+   * Orquesta de forma asíncrona la recuperación concurrente de datos (SQL / Supabase + NoSQL).
    * Gestiona el estado de spinner (isLoading) y recalcula gráficos y filtros.
    */
   public loadDashboardData(): void {
@@ -342,11 +342,14 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
+      const pdfColumns = ['nombre', 'email', 'rol', 'departamento', 'estado'];
+      const pdfHeaders = ['Nombre Completo', 'Correo Electrónico', 'Rol de Acceso', 'Departamento', 'Estado'];
+
       this.exportService.exportTableToPdf({
         title: 'Informe Ejecutivo de Gestión de Usuarios',
         subtitle: `Filtro aplicado: ${this.selectedDepartment} | Total registros: ${this.filteredUsers.length}`,
-        headers: this.tableColumns.map(col => this.columnLabels[col] || col),
-        dataKeys: this.tableColumns,
+        headers: pdfHeaders,
+        dataKeys: pdfColumns,
         dataset: this.filteredUsers,
         filename: `informe_usuarios_${Date.now()}.pdf`,
         author: `${this.currentUserName} (${this.currentUserRole})`
@@ -375,10 +378,12 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     try {
-      const headers = this.tableColumns.map(col => this.columnLabels[col] || col);
+      const csvKeys = ['id', 'nombre', 'email', 'rol', 'departamento', 'estado', 'avatar'];
+      const csvHeaders = ['ID', 'Nombre Completo', 'Correo Electrónico', 'Rol', 'Departamento', 'Estado', 'URL Foto'];
+
       this.exportService.exportTableToCsv(
-        headers,
-        this.tableColumns,
+        csvHeaders,
+        csvKeys,
         this.filteredUsers,
         `informe_usuarios_${Date.now()}.csv`
       );
@@ -394,14 +399,19 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   /**
    * Atiende la emisión del evento @Output actionClicked procedente de DataTableComponent.
-   * Despliega un diálogo accesible con el detalle del registro y permite conmutar su estado.
+   * Despliega un diálogo accesible con la fotografía del usuario, detalle del registro y cambio de estado.
    * @param user Registro de usuario seleccionado.
    */
   public async handleRowAction(user: UserRecord): Promise<void> {
+    const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff`;
+
     const alert = await this.alertController.create({
-      header: 'Detalle del Usuario',
+      header: 'Ficha del Usuario',
       subHeader: `${user.nombre} (${user.rol})`,
       message: `
+        <div style="text-align: center; margin: 10px 0;">
+          <img src="${avatarUrl}" alt="Fotografía de ${user.nombre}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #3880ff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
+        </div>
         <strong>ID:</strong> ${user.id}<br>
         <strong>Email:</strong> ${user.email}<br>
         <strong>Departamento:</strong> ${user.departamento}<br>
@@ -428,7 +438,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Conmuta el estado del usuario simulando una llamada de actualización contra la API relacional.
+   * Conmuta el estado del usuario simulando una llamada de actualización contra la API relacional o Supabase.
    * @param userId Identificador del usuario.
    * @param newStatus Nuevo estado a establecer.
    */
