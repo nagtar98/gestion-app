@@ -1,11 +1,18 @@
-<ion-card>
+<ion-card class="stat-card" role="region" [attr.aria-label]="'Widget estadístico: ' + title">
   <ion-card-header>
-    <ion-card-title class="ion-text-center">{{ title }}</ion-card-title>
+    <ion-card-title class="stat-title ion-text-center">{{ title }}</ion-card-title>
   </ion-card-header>
   <ion-card-content>
-    <!-- El div relativo con altura fija es crucial para que Chart.js no se desborde -->
-    <div style="position: relative; height: 250px; width: 100%;">
-      <canvas #chartCanvas></canvas>
+    <!-- Contenedor relativo con altura fija para evitar desbordes en Chart.js -->
+    <div class="chart-wrapper">
+      <canvas
+        #chartCanvas
+        role="img"
+        [attr.aria-label]="accessibleDescription"
+        tabindex="0">
+        <!-- Texto alternativo de respaldo accesible para navegadores sin soporte de canvas o lectores -->
+        <p class="sr-only">{{ accessibleDescription }}</p>
+      </canvas>
     </div>
   </ion-card-content>
 </ion-card>

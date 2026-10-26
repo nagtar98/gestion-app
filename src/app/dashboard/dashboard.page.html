@@ -1,45 +1,304 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title>Dashboard Principal</ion-title>
+    <ion-title>Cuadro de Mando Empresarial</ion-title>
+
+    <ion-buttons slot="end">
+      <!-- Indicador de rol y usuario autenticado -->
+      <ion-badge
+        [color]="isAdmin ? 'warning' : 'light'"
+        class="user-role-badge ion-hide-sm-down"
+        aria-label="Rol del usuario actual">
+        <ion-icon [name]="isAdmin ? 'shield-checkmark-outline' : 'people-outline'" aria-hidden="true"></ion-icon>
+        <span>{{ currentUserName }} ({{ currentUserRole }})</span>
+      </ion-badge>
+
+      <!-- Botón de actualización de datos -->
+      <ion-button
+        fill="clear"
+        (click)="loadDashboardData()"
+        [disabled]="isLoading"
+        aria-label="Actualizar datos asíncronos"
+        tabindex="0">
+        <ion-icon name="refresh-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+
+      <!-- Botón de apertura del Manual de Usuario embebido -->
+      <ion-button
+        fill="clear"
+        (click)="openHelpModal()"
+        aria-label="Abrir manual de usuario y sistema de ayuda"
+        tabindex="0">
+        <ion-icon name="help-circle-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+
+      <!-- Botón para cerrar sesión de forma segura -->
+      <ion-button
+        fill="clear"
+        (click)="logout()"
+        aria-label="Cerrar sesión y salir del sistema"
+        tabindex="0">
+        <ion-icon name="log-out-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" color="light">
+<ion-content class="ion-padding dashboard-content" color="light">
   
-  <ion-grid>
-    <ion-row>
-      <ion-col size="12" size-md="6">
-        <app-stat-widget 
-          title="Usuarios por Departamento" 
-          type="bar" 
-          [labels]="chartLabels" 
-          [data]="chartValues">
-        </app-stat-widget>
-      </ion-col>
+  <!-- Spinner accesible de carga asíncrona concurrente (FASE 3 / RA 5) -->
+  @if (isLoading) {
+    <div class="loading-container" role="status" aria-live="polite">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p class="loading-text">Sincronizando orígenes de datos (SQL y NoSQL)...</p>
+    </div>
+  } @else {
+    <main class="dashboard-main" role="main">
 
-      <ion-col size="12" size-md="6">
-        <app-stat-widget 
-          title="Distribución Global" 
-          type="pie" 
-          [labels]="chartLabels" 
-          [data]="chartValues">
-        </app-stat-widget>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+      <!-- Fila de Tarjetas de Indicadores Clave (KPIs Consolidados) -->
+      <section class="kpi-section" aria-label="Indicadores Clave de Rendimiento">
+        <ion-grid class="ion-no-padding">
+          <ion-row>
+            <ion-col size="6" size-md="3">
+              <ion-card class="kpi-card" tabindex="0" aria-label="Total de usuarios registrados: {{ summary.totalUsuarios }}">
+                <ion-card-content>
+                  <div class="kpi-value text-primary">{{ summary.totalUsuarios }}</div>
+                  <div class="kpi-label">Total Usuarios</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
 
-  <!-- Envolvemos la tabla en una tarjeta para que coincida con el estilo -->
-  <ion-card>
-    <ion-card-header>
-      <ion-card-title>Gestión de Usuarios</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <app-data-table 
-        [columns]="tableColumns" 
-        [dataset]="tableData"
-        (actionClicked)="handleRowAction($event)">
-      </app-data-table>
-    </ion-card-content>
-  </ion-card>
-  
+            <ion-col size="6" size-md="3">
+              <ion-card class="kpi-card" tabindex="0" aria-label="Usuarios activos: {{ summary.usuariosActivos }}">
+                <ion-card-content>
+                  <div class="kpi-value text-success">{{ summary.usuariosActivos }}</div>
+                  <div class="kpi-label">Usuarios Activos</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <ion-col size="6" size-md="3">
+              <ion-card class="kpi-card" tabindex="0" aria-label="Total de departamentos: {{ summary.totalDepartamentos }}">
+                <ion-card-content>
+                  <div class="kpi-value text-warning">{{ summary.totalDepartamentos }}</div>
+                  <div class="kpi-label">Departamentos</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <ion-col size="6" size-md="3">
+              <ion-card class="kpi-card" tabindex="0" aria-label="Tasa de actividad: {{ summary.tasaActividad }} por ciento">
+                <ion-card-content>
+                  <div class="kpi-value text-info">{{ summary.tasaActividad }}%</div>
+                  <div class="kpi-label">Tasa Actividad</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </section>
+
+      <!-- Fila de Widgets Estadísticos basados en Chart.js (Mobile-First / Responsive) -->
+      <section class="charts-section ion-margin-top" aria-label="Visualización Gráfica y Métricas">
+        <ion-grid class="ion-no-padding">
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <app-stat-widget
+                title="Distribución por Departamento"
+                type="bar"
+                [labels]="chartLabels"
+                [data]="chartValues">
+              </app-stat-widget>
+            </ion-col>
+
+            <ion-col size="12" size-md="6">
+              <app-stat-widget
+                title="Proporción por Roles de Acceso"
+                type="pie"
+                [labels]="roleChartLabels"
+                [data]="roleChartValues">
+              </app-stat-widget>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </section>
+
+      <!-- Barra de Herramientas de Filtrado Reactivo y Exportación de Informes -->
+      <section class="toolbar-section ion-margin-top" aria-label="Filtros y Herramientas de Exportación">
+        <ion-card class="filter-card">
+          <ion-card-content>
+            <ion-row class="ion-align-items-center">
+              
+              <!-- Buscador en tiempo real accesible -->
+              <ion-col size="12" size-md="5">
+                <ion-searchbar
+                  [value]="searchTerm"
+                  (ionInput)="onSearchChange($event)"
+                  placeholder="Buscar por nombre, correo o rol..."
+                  debounce="300"
+                  aria-label="Filtrar usuarios en tiempo real"
+                  tabindex="0">
+                </ion-searchbar>
+              </ion-col>
+
+              <!-- Selector de departamentos -->
+              <ion-col size="12" size-md="3">
+                <ion-select
+                  aria-label="Filtrar por Departamento"
+                  placeholder="Departamento"
+                  [value]="selectedDepartment"
+                  (ionChange)="onDepartmentChange($event)"
+                  interface="popover"
+                  class="dept-select">
+                  @for (dept of departmentsList; track dept) {
+                    <ion-select-option [value]="dept">
+                      {{ dept }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+              </ion-col>
+
+              <!-- Botones de Exportación a PDF y CSV (FASE 3 / RA 5) -->
+              <ion-col size="12" size-md="4" class="export-actions ion-text-end">
+                <ion-button
+                  fill="outline"
+                  color="danger"
+                  size="small"
+                  (click)="exportToPdf()"
+                  [disabled]="!isAdmin || isExporting"
+                  [attr.aria-label]="isAdmin ? 'Exportar tabla a formato PDF' : 'Exportación a PDF restringida a Administrador'"
+                  tabindex="0">
+                  <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
+                  <span>Exportar PDF</span>
+                </ion-button>
+
+                <ion-button
+                  fill="outline"
+                  color="success"
+                  size="small"
+                  (click)="exportToCsv()"
+                  [disabled]="!isAdmin || isExporting"
+                  [attr.aria-label]="isAdmin ? 'Exportar tabla a formato CSV' : 'Exportación a CSV restringida a Administrador'"
+                  tabindex="0">
+                  <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
+                  <span>Exportar CSV</span>
+                </ion-button>
+              </ion-col>
+
+            </ion-row>
+
+            <!-- Aviso de restricción de permisos para rol no administrador -->
+            @if (!isAdmin) {
+              <div class="admin-notice">
+                <small>
+                  <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+                  La descarga de informes oficiales (PDF/CSV) está reservada al rol de <strong>Administrador</strong>.
+                </small>
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+      <!-- Componente DataTable Reutilizable y Agnóstico (FASE 2 / RA 3) -->
+      <section class="table-section ion-margin-top" aria-label="Tabla de Datos">
+        <ion-card class="table-card">
+          <ion-card-header>
+            <div class="card-header-flex">
+              <div>
+                <ion-card-title>Gestión de Personal y Cuentas</ion-card-title>
+                <ion-card-subtitle>
+                  Mostrando {{ filteredUsers.length }} de {{ allUsers.length }} registros disponibles
+                </ion-card-subtitle>
+              </div>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            <app-data-table
+              [columns]="tableColumns"
+              [dataset]="filteredUsers"
+              [columnLabels]="columnLabels"
+              tableCaption="Directorio de empleados y roles del sistema"
+              (actionClicked)="handleRowAction($event)">
+            </app-data-table>
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+    </main>
+  }
+
+  <!-- Modal Accesible: Sistema de Ayuda y Manual de Usuario Embebido (FASE 5 / RA 6) -->
+  <ion-modal [isOpen]="isHelpModalOpen" (didDismiss)="closeHelpModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Manual de Usuario y Guía de Uso</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeHelpModal()" aria-label="Cerrar modal de ayuda">
+              <ion-icon name="close-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding help-modal-content">
+        <article class="help-article" role="document">
+          <h2>1. Introducción y Propósito</h2>
+          <p>
+            Bienvenido al <strong>Sistema de Gestión Multiplataforma</strong>. Esta aplicación empresarial permite
+            la administración centralizada de cuentas de personal, visualización analítica de métricas y exportación
+            de informes oficiales conforme a estándares de accesibilidad WCAG.
+          </p>
+
+          <h2>2. Control de Acceso por Roles (RBAC)</h2>
+          <ul>
+            <li>
+              <strong>Administrador:</strong> Acceso ilimitado a todas las funcionalidades, visualización de métricas
+              consolidadas y exportación de informes oficiales en formatos <strong>PDF</strong> y <strong>CSV</strong>.
+            </li>
+            <li>
+              <strong>Usuario Estándar:</strong> Consulta de personal y métricas analíticas. Las opciones de descarga
+              de informes permanecen protegidas y desactivadas.
+            </li>
+          </ul>
+
+          <h2>3. Cuadro de Mando y Visualización</h2>
+          <p>
+            Los widgets estadísticos reflejan la distribución por departamento y la proporción de roles. Al escribir
+            en el buscador o cambiar el departamento, los datos y gráficos se recalculan en tiempo real de forma reactiva.
+          </p>
+
+          <h2>4. Generación y Descarga de Informes</h2>
+          <p>
+            Haga clic en <em>Exportar PDF</em> para generar un informe ejecutivo con cabecera corporativa y paginación,
+            o en <em>Exportar CSV</em> para obtener un fichero compatible con Microsoft Excel y hojas de cálculo (UTF-8 con BOM).
+          </p>
+
+          <h2>5. Accesibilidad y Navegación por Teclado</h2>
+          <ul>
+            <li>Utilice la tecla <code>Tab</code> y <code>Shift + Tab</code> para desplazarse ordenadamente entre campos y controles.</li>
+            <li>Presione <code>Enter</code> o <code>Espacio</code> para activar botones y desplegables.</li>
+            <li>Todos los componentes incorporan atributos <code>WAI-ARIA</code> compatibles con lectores de pantalla (NVDA, JAWS, VoiceOver).</li>
+          </ul>
+        </article>
+
+        <div class="ion-text-center ion-margin-top ion-padding-bottom">
+          <ion-button (click)="closeHelpModal()" expand="block" color="primary">
+            Entendido, volver a la aplicación
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Notificaciones Toast de Feedback al Usuario -->
+  <ion-toast
+    [isOpen]="isToastOpen"
+    [message]="toastMessage"
+    [duration]="3000"
+    (didDismiss)="isToastOpen = false"
+    position="bottom">
+  </ion-toast>
+
 </ion-content>

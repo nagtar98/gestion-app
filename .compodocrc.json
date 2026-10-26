@@ -1,0 +1,8 @@
+{
+  "title": "Sistema de Gestión Multiplataforma - Documentación Técnica",
+  "output": "dist/docs",
+  "theme": "material",
+  "language": "es-ES",
+  "hideGenerator": false,
+  "disableSourceCode": false
+}

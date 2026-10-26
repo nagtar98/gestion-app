@@ -1,22 +1,29 @@
 <ion-app>
   <ion-split-pane contentId="main-content">
-    <ion-menu contentId="main-content" type="overlay">
+    <ion-menu contentId="main-content" type="overlay" aria-label="Menú principal de navegación del sistema">
       <ion-content>
-       <ion-list id="inbox-list">
-          <!-- Cambiamos el texto por algo relacionado con tu app -->
-          <ion-list-header>Sistema de Gestión</ion-list-header>
-          <ion-note>Panel de Administración</ion-note>
+        <nav aria-label="Navegación global">
+          <ion-list id="inbox-list">
+            <ion-list-header role="heading" aria-level="2">Sistema de Gestión</ion-list-header>
+            <ion-note>Panel Empresarial</ion-note>
 
-          @for (p of appPages; track p; let i = $index) {
-            <ion-menu-toggle auto-hide="false">
-              <ion-item routerDirection="root" [routerLink]="[p.url]" lines="none" detail="false" routerLinkActive="selected">
-                <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'"></ion-icon>
-                <ion-label>{{ p.title }}</ion-label>
-              </ion-item>
-            </ion-menu-toggle>
-          }
-        </ion-list>
-
+            @for (p of appPages; track p; let i = $index) {
+              <ion-menu-toggle auto-hide="false">
+                <ion-item
+                  routerDirection="root"
+                  [routerLink]="[p.url]"
+                  lines="none"
+                  detail="false"
+                  routerLinkActive="selected"
+                  [attr.aria-label]="p.title"
+                  tabindex="0">
+                  <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'"></ion-icon>
+                  <ion-label>{{ p.title }}</ion-label>
+                </ion-item>
+              </ion-menu-toggle>
+            }
+          </ion-list>
+        </nav>
       </ion-content>
     </ion-menu>
     <ion-router-outlet id="main-content"></ion-router-outlet>

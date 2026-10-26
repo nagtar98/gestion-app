@@ -1,20 +1,67 @@
-<div class="table-container">
-  <table style="width: 100%; border-collapse: collapse; text-align: left;">
-    <thead>
-      <tr style="border-bottom: 2px solid #ccc;">
-        <th *ngFor="let col of columns" style="padding: 10px;">{{ col }}</th>
-        <th style="padding: 10px;">Acciones</th>
+<div class="table-responsive" tabindex="0" role="region" [attr.aria-label]="tableCaption">
+  <table class="accessible-table" role="table">
+    <caption class="sr-only">{{ tableCaption }}</caption>
+    
+    <thead role="rowgroup">
+      <tr role="row">
+        @for (col of columns; track col) {
+          <th
+            scope="col"
+            role="columnheader"
+            tabindex="0"
+            class="table-th">
+            {{ getHeaderLabel(col) }}
+          </th>
+        }
+        <th scope="col" role="columnheader" class="table-th text-center">
+          Acciones
+        </th>
       </tr>
     </thead>
-    <tbody>
-      <tr *ngFor="let row of dataset" style="border-bottom: 1px solid #eee;">
-        <!-- Iteramos las columnas dinámicamente -->
-        <td *ngFor="let col of columns" style="padding: 10px;">{{ row[col] }}</td>
-        <td style="padding: 10px;">
-          <!-- Botón que dispara el evento Output hacia el padre[cite: 2] -->
-          <ion-button size="small" (click)="onAction(row)">Ver</ion-button>
-        </td>
-      </tr>
+
+    <tbody role="rowgroup">
+      <!-- Fila vacía accesible si no hay resultados -->
+      @if (dataset.length === 0) {
+        <tr role="row">
+          <td [attr.colspan]="columns.length + 1" class="empty-state text-center" role="cell">
+            <p>{{ emptyMessage }}</p>
+          </td>
+        </tr>
+      }
+
+      <!-- Filas de datos iteradas dinámicamente -->
+      @for (row of dataset; track row.id || $index; let idx = $index) {
+        <tr role="row" class="table-row">
+          @for (col of columns; track col) {
+            <td role="cell" class="table-td">
+              <!-- Renderizado condicional accesible para estados -->
+              @if (isStatusColumn(col)) {
+                <ion-badge [color]="row[col] === 'Activo' ? 'success' : 'medium'" class="status-badge">
+                  {{ row[col] }}
+                </ion-badge>
+              } @else if (isRoleColumn(col)) {
+                <ion-badge [color]="row[col] === 'Administrador' ? 'primary' : 'tertiary'" class="role-badge">
+                  {{ row[col] }}
+                </ion-badge>
+              } @else {
+                <span class="cell-content">{{ row[col] }}</span>
+              }
+            </td>
+          }
+
+          <td role="cell" class="table-td text-center">
+            <ion-button
+              size="small"
+              fill="clear"
+              color="primary"
+              (click)="onAction(row)"
+              [attr.aria-label]="'Ver detalles de ' + (row.nombre || 'registro ' + (idx + 1))"
+              tabindex="0">
+              <ion-icon name="eye-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </td>
+        </tr>
+      }
     </tbody>
   </table>
 </div>

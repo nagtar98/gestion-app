@@ -1,23 +1,79 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonButton, IonIcon } from '@ionic/angular';
+import { IonButton, IonIcon, IonBadge } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { eyeOutline, personOutline } from 'ionicons/icons';
 
+/**
+ * @fileoverview Componente genérico y agnóstico de tabla de datos avanzada (FASE 2 / RA 3).
+ * Recibe datos mediante @Input unidireccionales y emite interacciones al padre mediante @Output.
+ * Implementa ChangeDetectionStrategy.OnPush y normativas de accesibilidad WAI-ARIA (RA 4).
+ * @module Components/DataTableComponent
+ */
 @Component({
   selector: 'app-data-table',
   templateUrl: './data-table.component.html',
   styleUrls: ['./data-table.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonButton, IonIcon]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, IonButton, IonIcon, IonBadge]
 })
 export class DataTableComponent {
-  // Recibe la información sin importar de dónde venga (componente agnóstico)[cite: 2]
+  /** Claves de las columnas que se proyectarán en la tabla */
   @Input() columns: string[] = [];
+
+  /** Colección de datos a representar */
   @Input() dataset: any[] = [];
 
-  // Emite eventos personalizados al componente padre[cite: 2]
+  /** Diccionario de mapeo opcional para títulos legibles de columnas */
+  @Input() columnLabels: Record<string, string> = {};
+
+  /** Texto descriptivo de la tabla para software de asistencia y lectores de pantalla */
+  @Input() tableCaption: string = 'Tabla de registros del sistema';
+
+  /** Mensaje desplegado en caso de ausencia de registros */
+  @Input() emptyMessage: string = 'No se encontraron registros que coincidan con la búsqueda.';
+
+  /** Emisión de evento al hacer clic en una acción sobre una fila */
   @Output() actionClicked = new EventEmitter<any>();
 
-  onAction(row: any) {
+  constructor() {
+    addIcons({ eyeOutline, personOutline });
+  }
+
+  /**
+   * Despacha el evento personalizado hacia el componente contenedor (padre).
+   * @param row Registro de datos sobre el que se ejecuta la acción.
+   */
+  public onAction(row: any): void {
     this.actionClicked.emit(row);
+  }
+
+  /**
+   * Resuelve el encabezado legible para una columna dada.
+   * @param col Clave técnica de la columna.
+   * @returns Nombre legible o clave capitalizada.
+   */
+  public getHeaderLabel(col: string): string {
+    if (this.columnLabels && this.columnLabels[col]) {
+      return this.columnLabels[col];
+    }
+    return col.charAt(0).toUpperCase() + col.slice(1);
+  }
+
+  /**
+   * Identifica si un valor corresponde a un estado que deba estilizarse con badge.
+   * @param col Clave de la columna.
+   */
+  public isStatusColumn(col: string): boolean {
+    return col.toLowerCase() === 'estado';
+  }
+
+  /**
+   * Identifica si un valor corresponde al rol del usuario.
+   * @param col Clave de la columna.
+   */
+  public isRoleColumn(col: string): boolean {
+    return col.toLowerCase() === 'rol';
   }
 }
