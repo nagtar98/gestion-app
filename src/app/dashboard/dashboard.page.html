@@ -1,15 +1,13 @@
 <ion-header>
-  <ion-toolbar color="secondary">
+  <ion-toolbar color="primary">
     <ion-title>Dashboard Principal</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" color="light">
   
-  <!-- Uso de Grid de Ionic para Responsive Design[cite: 2] -->
   <ion-grid>
     <ion-row>
-      <!-- Gráfico de barras (Ocupa toda la fila en móviles, la mitad en escritorio) -->
       <ion-col size="12" size-md="6">
         <app-stat-widget 
           title="Usuarios por Departamento" 
@@ -19,7 +17,6 @@
         </app-stat-widget>
       </ion-col>
 
-      <!-- Gráfico circular -->
       <ion-col size="12" size-md="6">
         <app-stat-widget 
           title="Distribución Global" 
@@ -31,12 +28,18 @@
     </ion-row>
   </ion-grid>
 
-  <h2 class="ion-margin-top">Gestión de Usuarios</h2>
-  
-  <app-data-table 
-    [columns]="tableColumns" 
-    [dataset]="tableData"
-    (actionClicked)="handleRowAction($event)">
-  </app-data-table>
+  <!-- Envolvemos la tabla en una tarjeta para que coincida con el estilo -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Gestión de Usuarios</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <app-data-table 
+        [columns]="tableColumns" 
+        [dataset]="tableData"
+        (actionClicked)="handleRowAction($event)">
+      </app-data-table>
+    </ion-card-content>
+  </ion-card>
   
 </ion-content>

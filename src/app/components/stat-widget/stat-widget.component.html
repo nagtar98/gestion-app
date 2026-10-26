@@ -1,4 +1,11 @@
-<div class="widget-container" style="position: relative; height: 300px; width: 100%; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;">
-  <h3 style="text-align: center; margin-top: 0;">{{ title }}</h3>
-  <canvas #chartCanvas></canvas>
-</div>
+<ion-card>
+  <ion-card-header>
+    <ion-card-title class="ion-text-center">{{ title }}</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <!-- El div relativo con altura fija es crucial para que Chart.js no se desborde -->
+    <div style="position: relative; height: 250px; width: 100%;">
+      <canvas #chartCanvas></canvas>
+    </div>
+  </ion-card-content>
+</ion-card>

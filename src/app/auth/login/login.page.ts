@@ -26,8 +26,10 @@ export class LoginPage implements OnInit {
     });
   }
 
-  ngOnInit() {}
-
+ ngOnInit() {
+    // Al entrar a la pantalla de login, destruimos la sesión anterior
+    localStorage.removeItem('userRole');
+  }
   onSubmit() {
     if (this.loginForm.valid) {
       // Simulamos la respuesta del servidor y la asignación del rol[cite: 1]

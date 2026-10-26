@@ -1,6 +1,7 @@
 import { Component, Input, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular';
 
 // Registramos los componentes de Chart.js
 Chart.register(...registerables);
@@ -10,7 +11,7 @@ Chart.register(...registerables);
   templateUrl: './stat-widget.component.html',
   styleUrls: ['./stat-widget.component.scss'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, IonCard, IonCardHeader, IonCardTitle, IonCardContent] 
 })
 export class StatWidgetComponent implements AfterViewInit {
   @ViewChild('chartCanvas') chartCanvas!: ElementRef;

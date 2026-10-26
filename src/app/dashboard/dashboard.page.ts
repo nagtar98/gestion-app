@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol,IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular';
 import { DataTableComponent } from '../components/data-table/data-table.component';
 // 1. Importamos el nuevo widget
 import { StatWidgetComponent } from '../components/stat-widget/stat-widget.component'; 
@@ -10,10 +10,10 @@ import { StatWidgetComponent } from '../components/stat-widget/stat-widget.compo
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.scss'],
   standalone: true,
-  // 2. Añadimos StatWidgetComponent y los componentes de Grid de Ionic
   imports: [
     IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, 
-    CommonModule, DataTableComponent, StatWidgetComponent
+    CommonModule, DataTableComponent, StatWidgetComponent,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent
   ]
 })
 export class DashboardPage implements OnInit {
