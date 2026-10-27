@@ -106,7 +106,6 @@ import { emailUniqueValidator } from '../core/validators/auth.validators';
     IonButtons,
     IonModal,
     IonToast,
-    IonItem,
     IonLabel,
     IonInput,
     IonText,
@@ -362,19 +361,23 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Recalcula las distribuciones estadísticas proyectadas en los widgets visuales (Chart.js).
    */
   private updateCharts(): void {
-    // 1. Distribución por departamentos (según datos filtrados o globales de NoSQL)
-    const countsByDept: Record<string, number> = {};
-    for (const user of this.filteredUsers) {
-      countsByDept[user.departamento] = (countsByDept[user.departamento] || 0) + 1;
-    }
-
-    this.chartLabels = Object.keys(countsByDept);
-    this.chartValues = Object.values(countsByDept);
-
-    // Si el filtro no arroja resultados, usamos las métricas base NoSQL
-    if (this.chartLabels.length === 0 && this.departmentMetrics.length > 0) {
+    // 1. Distribución por departamentos (Evolución y Dotación de Personal - RA 5)
+    if (this.selectedDepartment === 'TODOS' && !this.searchTerm.trim() && this.departmentMetrics.length > 0) {
       this.chartLabels = this.departmentMetrics.map(m => m.departamento);
       this.chartValues = this.departmentMetrics.map(m => m.cantidad);
+    } else {
+      const countsByDept: Record<string, number> = {};
+      for (const user of this.filteredUsers) {
+        countsByDept[user.departamento] = (countsByDept[user.departamento] || 0) + 1;
+      }
+
+      this.chartLabels = Object.keys(countsByDept);
+      this.chartValues = Object.values(countsByDept);
+
+      if (this.chartLabels.length === 0 && this.departmentMetrics.length > 0) {
+        this.chartLabels = this.departmentMetrics.map(m => m.departamento);
+        this.chartValues = this.departmentMetrics.map(m => m.cantidad);
+      }
     }
 
     // 2. Distribución por roles

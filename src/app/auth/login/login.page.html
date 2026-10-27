@@ -18,23 +18,20 @@
           
           <!-- Campo Correo Electrónico -->
           <div class="form-group">
-            <ion-item lines="inset" class="custom-item">
-              <ion-label position="floating" id="lbl-email">
-                Correo Electrónico <span aria-hidden="true">*</span>
-              </ion-label>
-              <ion-input
-                id="input-email"
-                type="email"
-                formControlName="email"
-                inputmode="email"
-                autocomplete="email"
-                aria-required="true"
-                aria-labelledby="lbl-email"
-                [attr.aria-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-                aria-describedby="email-feedback"
-                tabindex="1">
-              </ion-input>
-
+            <ion-input
+              id="input-email"
+              label="Correo Electrónico *"
+              labelPlacement="floating"
+              fill="outline"
+              type="email"
+              formControlName="email"
+              inputmode="email"
+              autocomplete="email"
+              aria-required="true"
+              [attr.aria-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+              aria-describedby="email-feedback"
+              class="modern-input"
+              tabindex="1">
               <!-- Indicador visual y accesible de validación asíncrona en curso -->
               @if (isEmailValidating) {
                 <ion-spinner
@@ -44,7 +41,7 @@
                   aria-label="Comprobando existencia del correo en base de datos">
                 </ion-spinner>
               }
-            </ion-item>
+            </ion-input>
 
             <!-- Zona de mensajes de estado y feedback accesible WAI-ARIA -->
             <div id="email-feedback" role="alert" aria-live="polite" class="feedback-container">
@@ -86,22 +83,20 @@
 
           <!-- Campo Contraseña -->
           <div class="form-group ion-margin-top">
-            <ion-item lines="inset" class="custom-item">
-              <ion-label position="floating" id="lbl-password">
-                Contraseña <span aria-hidden="true">*</span>
-              </ion-label>
-              <ion-input
-                id="input-password"
-                type="password"
-                formControlName="password"
-                autocomplete="current-password"
-                aria-required="true"
-                aria-labelledby="lbl-password"
-                [attr.aria-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-                aria-describedby="password-feedback"
-                tabindex="2">
-              </ion-input>
-            </ion-item>
+            <ion-input
+              id="input-password"
+              label="Contraseña *"
+              labelPlacement="floating"
+              fill="outline"
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+              aria-required="true"
+              [attr.aria-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+              aria-describedby="password-feedback"
+              class="modern-input"
+              tabindex="2">
+            </ion-input>
 
             <div id="password-feedback" role="alert" aria-live="polite" class="feedback-container">
               @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {

@@ -31,11 +31,11 @@ ion-card-subtitle {
   color: #556270;
 }
 
-.custom-item {
+.modern-input {
   --background: #ffffff;
-  --border-color: #d1d5db;
-  --highlight-color-focused: var(--ion-color-primary, #3880ff);
-  border-radius: 8px;
+  --border-color: #cbd5e1;
+  --border-radius: 8px;
+  --highlight-color-focused: var(--ion-color-primary, #2563eb);
   margin-bottom: 0.25rem;
 }
 

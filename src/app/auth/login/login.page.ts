@@ -51,8 +51,6 @@ import { emailExistsValidator } from '../../core/validators/auth.validators';
     IonToolbar,
     IonTitle,
     IonContent,
-    IonItem,
-    IonLabel,
     IonInput,
     IonText,
     IonButton,

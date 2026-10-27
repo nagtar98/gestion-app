@@ -20,11 +20,30 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/* Dark mode adaptativo */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/* Paleta corporativa de alto contraste (evita texto blanco sobre fondo blanco del navegador) */
+:root {
+  color-scheme: light;
+  --ion-text-color: #0f172a;
+  --ion-text-color-rgb: 15, 23, 42;
+  --ion-background-color: #f1f5f9;
+  --ion-background-color-rgb: 241, 245, 249;
+  --ion-card-background: #ffffff;
+  --ion-item-background: #ffffff;
+}
 
-/* Cumplimiento WCAG 2.1 AA: Contraste y Navegación por Teclado */
-:focus-visible {
+html, body {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+/* Cumplimiento WCAG 2.1 AA: Anillo de Foco Accesible selectivo */
+button:focus-visible,
+a:focus-visible,
+ion-button:focus-visible,
+ion-card:focus-visible,
+ion-item:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
   outline: 2px solid var(--ion-color-primary, #3880ff) !important;
   outline-offset: 2px !important;
 }

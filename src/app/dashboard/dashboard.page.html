@@ -267,15 +267,15 @@
           
           <!-- Nombre Completo -->
           <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">Nombre Completo *</ion-label>
-              <ion-input
-                type="text"
-                formControlName="nombre"
-                aria-required="true"
-                tabindex="1">
-              </ion-input>
-            </ion-item>
+            <ion-input
+              label="Nombre Completo *"
+              labelPlacement="floating"
+              fill="outline"
+              type="text"
+              formControlName="nombre"
+              aria-required="true"
+              tabindex="1">
+            </ion-input>
             @if (createUserForm.get('nombre')?.invalid && createUserForm.get('nombre')?.touched) {
               <ion-text color="danger">
                 <p class="error-text">El nombre es obligatorio y debe tener al menos 3 caracteres.</p>
@@ -285,18 +285,18 @@
 
           <!-- Correo Electrónico con Validación Asíncrona de Unicidad -->
           <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">Correo Electrónico *</ion-label>
-              <ion-input
-                type="email"
-                formControlName="email"
-                aria-required="true"
-                tabindex="2">
-              </ion-input>
+            <ion-input
+              label="Correo Electrónico *"
+              labelPlacement="floating"
+              fill="outline"
+              type="email"
+              formControlName="email"
+              aria-required="true"
+              tabindex="2">
               @if (isNewEmailValidating) {
                 <ion-spinner slot="end" name="crescent" color="primary"></ion-spinner>
               }
-            </ion-item>
+            </ion-input>
 
             <div role="alert" aria-live="polite">
               @if (isNewEmailValidating) {
@@ -325,38 +325,47 @@
 
           <!-- Rol de Acceso -->
           <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">Rol de Acceso *</ion-label>
-              <ion-select formControlName="rol" interface="popover" tabindex="3">
-                <ion-select-option value="Usuario Estandar">Usuario Estándar</ion-select-option>
-                <ion-select-option value="Administrador">Administrador</ion-select-option>
-              </ion-select>
-            </ion-item>
+            <ion-select
+              label="Rol de Acceso *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="rol"
+              interface="popover"
+              tabindex="3">
+              <ion-select-option value="Usuario Estandar">Usuario Estándar</ion-select-option>
+              <ion-select-option value="Administrador">Administrador</ion-select-option>
+            </ion-select>
           </div>
 
           <!-- Departamento -->
           <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">Departamento *</ion-label>
-              <ion-select formControlName="departamento" interface="popover" tabindex="4">
-                <ion-select-option value="Desarrollo">Desarrollo</ion-select-option>
-                <ion-select-option value="Soporte">Soporte</ion-select-option>
-                <ion-select-option value="Ventas">Ventas</ion-select-option>
-                <ion-select-option value="Marketing">Marketing</ion-select-option>
-                <ion-select-option value="Finanzas">Finanzas</ion-select-option>
-              </ion-select>
-            </ion-item>
+            <ion-select
+              label="Departamento *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="departamento"
+              interface="popover"
+              tabindex="4">
+              <ion-select-option value="Desarrollo">Desarrollo</ion-select-option>
+              <ion-select-option value="Soporte">Soporte</ion-select-option>
+              <ion-select-option value="Ventas">Ventas</ion-select-option>
+              <ion-select-option value="Marketing">Marketing</ion-select-option>
+              <ion-select-option value="Finanzas">Finanzas</ion-select-option>
+            </ion-select>
           </div>
 
           <!-- Estado Operativo -->
           <div class="form-group ion-margin-bottom">
-            <ion-item lines="inset">
-              <ion-label position="floating">Estado Inicial *</ion-label>
-              <ion-select formControlName="estado" interface="popover" tabindex="5">
-                <ion-select-option value="Activo">Activo</ion-select-option>
-                <ion-select-option value="Inactivo">Inactivo</ion-select-option>
-              </ion-select>
-            </ion-item>
+            <ion-select
+              label="Estado Inicial *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="estado"
+              interface="popover"
+              tabindex="5">
+              <ion-select-option value="Activo">Activo</ion-select-option>
+              <ion-select-option value="Inactivo">Inactivo</ion-select-option>
+            </ion-select>
           </div>
 
           <!-- Fotografía de Perfil con soporte para Bucket 'avatars' de Supabase -->
@@ -397,15 +406,15 @@
                   <span>{{ isUploadingAvatar ? 'Subiendo al Bucket...' : 'Subir Imagen al Bucket avatars' }}</span>
                 </ion-button>
 
-                <ion-item lines="inset" class="avatar-url-item">
-                  <ion-label position="floating">O URL del Bucket en Supabase</ion-label>
-                  <ion-input
-                    type="url"
-                    formControlName="avatar"
-                    placeholder="https://...supabase.co/storage/v1/object/public/avatars/..."
-                    tabindex="6">
-                  </ion-input>
-                </ion-item>
+                <ion-input
+                  label="O URL de la foto en Supabase Storage"
+                  labelPlacement="floating"
+                  fill="outline"
+                  type="url"
+                  formControlName="avatar"
+                  placeholder="https://...supabase.co/storage/v1/object/public/avatars/..."
+                  tabindex="6">
+                </ion-input>
               </div>
             </div>
 
