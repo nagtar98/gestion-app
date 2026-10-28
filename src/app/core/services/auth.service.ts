@@ -5,10 +5,7 @@ import { AuthUser, UserRole } from '../models/user.model';
 import { SupabaseService } from './supabase.service';
 
 /**
- * @fileoverview Servicio central de autenticación y gestión de estado de sesión.
- * Implementa el patrón Singleton con persistencia en localStorage, emisión de estado reactivo
- * y compatibilidad dual con catálogo local o base de datos Supabase en la nube.
- * @module Core/Services/AuthService
+ * Servicio de autenticación y gestión de sesión de usuario.
  */
 @Injectable({
   providedIn: 'root'

@@ -19,7 +19,8 @@ import {
   IonCardContent,
   IonSpinner,
   IonIcon,
-  IonNote
+  IonNote,
+  IonButtons
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -27,16 +28,16 @@ import {
   lockClosedOutline,
   alertCircleOutline,
   checkmarkCircleOutline,
-  informationCircleOutline
+  informationCircleOutline,
+  sunnyOutline,
+  moonOutline
 } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { emailExistsValidator } from '../../core/validators/auth.validators';
 
 /**
- * @fileoverview Componente de autenticación y acceso al sistema.
- * Implementa ChangeDetectionStrategy.OnPush para máximo rendimiento (RA 2).
- * Gestiona validaciones reactivas síncronas y asíncronas con feedback accesible WAI-ARIA (RA 4).
- * @module Auth/LoginPage
+ * Página de inicio de sesión.
  */
 @Component({
   selector: 'app-login',
@@ -61,7 +62,8 @@ import { emailExistsValidator } from '../../core/validators/auth.validators';
     IonCardContent,
     IonSpinner,
     IonIcon,
-    IonNote
+    IonNote,
+    IonButtons
   ]
 })
 export class LoginPage {
@@ -69,6 +71,7 @@ export class LoginPage {
   private router = inject(Router);
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
+  public themeService = inject(ThemeService);
 
   /** Formulario reactivo de autenticación */
   loginForm: FormGroup;
@@ -79,16 +82,23 @@ export class LoginPage {
   /** Mensaje de error global retornado por el servicio de autenticación */
   errorMessage: string | null = null;
 
+  public toggleTheme(): void {
+    this.themeService.toggleTheme();
+    this.cdr.markForCheck();
+  }
+
   constructor() {
     addIcons({
       personOutline,
       lockClosedOutline,
       alertCircleOutline,
       checkmarkCircleOutline,
-      informationCircleOutline
+      informationCircleOutline,
+      sunnyOutline,
+      moonOutline
     });
 
-    // Configuración del formulario reactivo con validación síncrona y asíncrona (FASE 1)
+    // Formulario de login
     this.loginForm = this.fb.group({
       email: [
         '',

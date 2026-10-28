@@ -4,17 +4,7 @@ import { map, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 /**
- * @fileoverview Validadores asíncronos para formularios reactivos de autenticación y alta de registros.
- * Permite comprobar la existencia o unicidad de cuentas en backend/base de datos.
- * @module Core/Validators/AuthValidators
- */
-
-/**
- * Fabrica un validador asíncrono para verificar si un correo electrónico existe en la base de datos (Login).
- * Aplica una pausa (debounce) de 400ms antes de emitir la petición para optimizar el rendimiento.
- *
- * @param authService Servicio de autenticación inyectado con métodos de consulta.
- * @returns Función de validación asíncrona conforme a la API de Angular ReactiveFormsModule.
+ * Validador asíncrono para comprobar si el correo existe al hacer login.
  */
 export function emailExistsValidator(authService: AuthService): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -47,11 +37,7 @@ export function emailExistsValidator(authService: AuthService): AsyncValidatorFn
 }
 
 /**
- * Fabrica un validador asíncrono para verificar la unicidad de un correo (Alta de nuevo registro).
- * Comprueba que el correo NO exista previamente en la base de datos (Supabase).
- *
- * @param authService Servicio de autenticación inyectado.
- * @returns Función de validación asíncrona que emite { emailAlreadyExists: true } si ya existe.
+ * Validador asíncrono para verificar que un correo no esté ya registrado.
  */
 export function emailUniqueValidator(authService: AuthService): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {

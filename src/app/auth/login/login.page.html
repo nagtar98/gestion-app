@@ -1,6 +1,15 @@
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title>Sistema de Gestión Multiplataforma</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        fill="clear"
+        (click)="toggleTheme()"
+        [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        tabindex="0">
+        <ion-icon [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -146,11 +155,11 @@
           </ion-button>
         </form>
 
-        <!-- Bloque de ayuda para evaluador con credenciales de prueba -->
-        <section class="demo-box" aria-label="Credenciales de acceso para evaluación">
+        <!-- Acceso rápido con cuentas de prueba -->
+        <section class="demo-box" aria-label="Cuentas de prueba">
           <p class="demo-title">
             <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
-            <strong>Credenciales de evaluación rápida:</strong>
+            <strong>Cuentas de prueba:</strong>
           </p>
           <div class="demo-buttons">
             <ion-button

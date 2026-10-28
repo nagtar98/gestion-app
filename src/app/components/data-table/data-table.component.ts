@@ -2,13 +2,10 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { CommonModule } from '@angular/common';
 import { IonButton, IonIcon, IonBadge } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { eyeOutline, personOutline } from 'ionicons/icons';
+import { eyeOutline, personOutline, trashOutline } from 'ionicons/icons';
 
 /**
- * @fileoverview Componente genérico y agnóstico de tabla de datos avanzada (FASE 2 / RA 3).
- * Recibe datos mediante @Input unidireccionales y emite interacciones al padre mediante @Output.
- * Implementa ChangeDetectionStrategy.OnPush, renderizado accesible de imágenes de perfil y WAI-ARIA (RA 4).
- * @module Components/DataTableComponent
+ * Componente reutilizable de tabla para mostrar datos tabulares.
  */
 @Component({
   selector: 'app-data-table',
@@ -19,26 +16,18 @@ import { eyeOutline, personOutline } from 'ionicons/icons';
   imports: [CommonModule, IonButton, IonIcon, IonBadge]
 })
 export class DataTableComponent {
-  /** Claves de las columnas que se proyectarán en la tabla */
   @Input() columns: string[] = [];
-
-  /** Colección de datos a representar */
   @Input() dataset: any[] = [];
-
-  /** Diccionario de mapeo opcional para títulos legibles de columnas */
   @Input() columnLabels: Record<string, string> = {};
-
-  /** Texto descriptivo de la tabla para software de asistencia y lectores de pantalla */
   @Input() tableCaption: string = 'Tabla de registros del sistema';
-
-  /** Mensaje desplegado en caso de ausencia de registros */
   @Input() emptyMessage: string = 'No se encontraron registros que coincidan con la búsqueda.';
+  @Input() isAdmin: boolean = false;
 
-  /** Emisión de evento al hacer clic en una acción sobre una fila */
   @Output() actionClicked = new EventEmitter<any>();
+  @Output() deleteClicked = new EventEmitter<any>();
 
   constructor() {
-    addIcons({ eyeOutline, personOutline });
+    addIcons({ eyeOutline, personOutline, trashOutline });
   }
 
   /**
@@ -47,6 +36,14 @@ export class DataTableComponent {
    */
   public onAction(row: any): void {
     this.actionClicked.emit(row);
+  }
+
+  /**
+   * Despacha el evento de eliminación de registro hacia el padre (solo Administrador).
+   * @param row Registro de datos a eliminar.
+   */
+  public onDelete(row: any): void {
+    this.deleteClicked.emit(row);
   }
 
   /**

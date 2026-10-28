@@ -13,12 +13,8 @@ export interface SupabaseConfig {
 }
 
 /**
- * @fileoverview Servicio de concurrencia y orquestación asíncrona de orígenes de datos.
- * Simula el consumo dual de fuentes exigido en la FASE 3 (RA 5):
- * 1. API REST basada en base de datos relacional (SQL) o conexión real a Supabase en la nube.
- * 2. Servicio NoSQL / en tiempo real documental para métricas de cuadro de mando.
- * Dispone de integración nativa con imágenes y fotos de perfil en la nube.
- * @module Core/Services/DataService
+ * Servicio de datos que gestiona los usuarios y las métricas del dashboard,
+ * conectando con Supabase o usando datos locales como fallback.
  */
 @Injectable({
   providedIn: 'root'
@@ -27,7 +23,7 @@ export class DataService {
   private supabaseService = inject(SupabaseService);
 
   /**
-   * Dataset representativo de la fuente Relacional (SQL) enriquecido con imágenes de perfil.
+   * Lista local de usuarios con avatares.
    */
   private mockSqlUsers: UserRecord[] = [
     {
@@ -241,7 +237,7 @@ export class DataService {
   }
 
   /**
-   * Da de alta un nuevo registro de usuario en Supabase o en el catálogo local (FASE 1 / Paso 1.2).
+   * Crea un nuevo usuario en Supabase o en la lista local.
    * @param newUser Datos del usuario a dar de alta.
    * @returns Observable con el usuario insertado.
    */
@@ -262,5 +258,30 @@ export class DataService {
     const localRecord: UserRecord = { id: nextId, ...newUser };
     this.mockSqlUsers.push(localRecord);
     return of(localRecord).pipe(delay(400));
+  }
+
+  /**
+   * Elimina un usuario por su identificador único (Solo disponible para Administrador).
+   * @param id Identificador único del usuario.
+   * @returns Observable booleano indicando éxito.
+   */
+  public deleteUser(id: number): Observable<boolean> {
+    if (this.supabaseService.isConfigured()) {
+      return from(this.supabaseService.deleteUser(id)).pipe(
+        map(() => {
+          const idx = this.mockSqlUsers.findIndex(u => u.id === id);
+          if (idx !== -1) {
+            this.mockSqlUsers.splice(idx, 1);
+          }
+          return true;
+        })
+      );
+    }
+
+    const idx = this.mockSqlUsers.findIndex(u => u.id === id);
+    if (idx !== -1) {
+      this.mockSqlUsers.splice(idx, 1);
+    }
+    return of(true).pipe(delay(300));
   }
 }

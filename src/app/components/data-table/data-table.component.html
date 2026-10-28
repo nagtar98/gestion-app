@@ -63,15 +63,30 @@
           }
 
           <td role="cell" class="table-td text-center">
-            <ion-button
-              size="small"
-              fill="clear"
-              color="primary"
-              (click)="onAction(row)"
-              [attr.aria-label]="'Ver detalles de ' + (row.nombre || 'registro ' + (idx + 1))"
-              tabindex="0">
-              <ion-icon name="eye-outline" slot="icon-only" aria-hidden="true"></ion-icon>
-            </ion-button>
+            <div class="action-buttons-group">
+              <ion-button
+                size="small"
+                fill="clear"
+                color="primary"
+                (click)="onAction(row)"
+                [attr.aria-label]="'Ver detalles de ' + (row.nombre || 'registro ' + (idx + 1))"
+                tabindex="0">
+                <ion-icon name="eye-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+              </ion-button>
+
+              @if (isAdmin) {
+                <ion-button
+                  size="small"
+                  fill="clear"
+                  color="danger"
+                  (click)="onDelete(row)"
+                  [attr.aria-label]="'Eliminar usuario ' + (row.nombre || 'registro ' + (idx + 1))"
+                  tabindex="0"
+                  class="delete-action-btn">
+                  <ion-icon name="trash-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+                </ion-button>
+              }
+            </div>
           </td>
         </tr>
       }

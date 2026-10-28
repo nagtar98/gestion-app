@@ -22,6 +22,11 @@
                 </ion-item>
               </ion-menu-toggle>
             }
+
+            <ion-item lines="none" class="theme-menu-item" (click)="toggleTheme()" tabindex="0" button>
+              <ion-icon [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'" slot="start" aria-hidden="true"></ion-icon>
+              <ion-label>{{ themeService.isDarkMode() ? 'Modo Claro' : 'Modo Oscuro' }}</ion-label>
+            </ion-item>
           </ion-list>
         </nav>
       </ion-content>

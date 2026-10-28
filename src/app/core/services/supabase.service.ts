@@ -4,9 +4,7 @@ import { environment } from '../../../environments/environment';
 import { UserRecord, UserRole } from '../models/user.model';
 
 /**
- * @fileoverview Servicio de integración directa con backend Supabase (BaaS en la nube).
- * Gestiona el cliente SDK oficial, consultas a tablas SQL, gestión de Storage Buckets y fotos de perfil.
- * @module Core/Services/SupabaseService
+ * Servicio para interactuar con la base de datos y el storage de Supabase.
  */
 @Injectable({
   providedIn: 'root'
@@ -132,9 +130,9 @@ export class SupabaseService {
   }
 
   /**
-   * Da de alta un nuevo usuario en la tabla 'usuarios' de Supabase (FASE 1 / Paso 1.2).
+   * Registra un nuevo usuario en la tabla 'usuarios' de Supabase.
    * @param user Datos del nuevo usuario a registrar.
-   * @returns Promesa con el registro insertado incluyendo su nuevo ID autonumérico.
+   * @returns Promesa con el registro insertado.
    */
   public async createUser(user: Omit<UserRecord, 'id'>): Promise<UserRecord> {
     if (!this.supabase) {
@@ -173,6 +171,33 @@ export class SupabaseService {
       avatar: inserted.avatar_url,
       fechaAlta: inserted.fecha_alta
     };
+  }
+
+  /**
+   * Elimina un usuario por su ID de la tabla 'usuarios' de Supabase (exclusivo Administrador).
+   * @param id Identificador numérico del usuario.
+   * @returns Promesa booleana indicando el éxito de la eliminación.
+   */
+  public async deleteUser(id: number): Promise<boolean> {
+    if (!this.supabase) {
+      throw new Error('Supabase no está configurado.');
+    }
+
+    const { data, error } = await this.supabase
+      .from('usuarios')
+      .delete()
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('No se pudo eliminar el registro en Supabase. Asegúrate de haber ejecutado la política de DELETE en Supabase.');
+    }
+
+    return true;
   }
 
   /**

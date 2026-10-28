@@ -7,21 +7,20 @@ import {
   SimpleChanges,
   ViewChild,
   ElementRef,
-  ChangeDetectionStrategy
+  ChangeDetectionStrategy,
+  inject,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables } from 'chart.js';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular';
+import { ThemeService } from '../../core/services/theme.service';
 
 // Registro global de controladores, escalas y elementos de Chart.js
 Chart.register(...registerables);
 
 /**
- * @fileoverview Widget estadístico agnóstico y reutilizable basado en Chart.js (FASE 2 / RA 3).
- * Soporta tipos de gráfico visuales no basados en barras ('line', 'doughnut', 'pie', 'polarArea').
- * Gestiona minuciosamente el ciclo de vida (ngOnDestroy) para prevenir fugas de memoria (memory leaks)
- * y actualiza reactivamente la vista mediante ngOnChanges y ChangeDetectionStrategy.OnPush.
- * @module Components/StatWidgetComponent
+ * Componente para renderizar gráficos con Chart.js.
  */
 @Component({
   selector: 'app-stat-widget',
@@ -53,7 +52,20 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
   /** Referencia al temporizador para evitar colisiones en cambios rápidos */
   private initTimer: any = null;
 
-  constructor() {}
+  /** Servicio reactivo de temas */
+  private themeService = inject(ThemeService, { optional: true });
+
+  constructor() {
+    if (this.themeService) {
+      effect(() => {
+        // Rastrear el cambio de tema para adaptar colores de ejes y leyendas
+        const isDark = this.themeService?.isDarkMode();
+        if (this.chart) {
+          this.scheduleChartRender(20);
+        }
+      });
+    }
+  }
 
   /**
    * Ciclo de vida posterior a la renderización del template. Inicializa el canvas de forma segura.
@@ -129,7 +141,7 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
       return;
     }
 
-    // Paleta de colores armónica con contraste WCAG AA
+    // Paleta de colores para gráficos
     const backgroundColors = [
       'rgba(37, 99, 235, 0.75)',
       'rgba(22, 163, 74, 0.75)',
@@ -148,6 +160,11 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
 
     const isLine = this.type === 'line';
 
+    const isDark = this.themeService ? this.themeService.isDarkMode() : document.documentElement.classList.contains('dark-theme');
+    const labelColor = isDark ? '#94a3b8' : '#334155';
+    const tickColor = isDark ? '#94a3b8' : '#475569';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
     this.chart = new Chart(ctx, {
       type: this.type as any,
       data: {
@@ -156,13 +173,13 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
           {
             label: this.title,
             data: [...this.data],
-            backgroundColor: isLine ? 'rgba(37, 99, 235, 0.16)' : backgroundColors.slice(0, this.data.length),
-            borderColor: isLine ? '#2563eb' : borderColors.slice(0, this.data.length),
+            backgroundColor: isLine ? (isDark ? 'rgba(59, 130, 246, 0.25)' : 'rgba(37, 99, 235, 0.16)') : backgroundColors.slice(0, this.data.length),
+            borderColor: isLine ? '#3b82f6' : borderColors.slice(0, this.data.length),
             borderWidth: isLine ? 3 : 1.5,
             fill: isLine,
             tension: 0.35, // Curvatura suave y estética para gráfico de líneas
-            pointBackgroundColor: '#2563eb',
-            pointBorderColor: '#ffffff',
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: isDark ? '#131c2e' : '#ffffff',
             pointBorderWidth: 2,
             pointRadius: isLine ? 6 : 3,
             pointHoverRadius: 8
@@ -189,7 +206,7 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
             position: 'bottom',
             labels: {
               boxWidth: 14,
-              color: '#334155',
+              color: labelColor,
               font: {
                 size: 11
               }
@@ -207,18 +224,18 @@ export class StatWidgetComponent implements AfterViewInit, OnChanges, OnDestroy 
             grace: '20%',
             ticks: {
               precision: 0,
-              color: '#475569',
+              color: tickColor,
               font: {
                 size: 11
               }
             },
             grid: {
-              color: 'rgba(0, 0, 0, 0.06)'
+              color: gridColor
             }
           },
           x: {
             ticks: {
-              color: '#475569',
+              color: tickColor,
               font: {
                 size: 11
               }

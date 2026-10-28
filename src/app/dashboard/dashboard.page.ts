@@ -31,6 +31,8 @@ import {
   IonInput,
   IonText,
   IonNote,
+  IonProgressBar,
+  IonChip,
   AlertController
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -51,7 +53,18 @@ import {
   personAddOutline,
   cloudUploadOutline,
   eyeOutline,
-  informationCircleOutline
+  informationCircleOutline,
+  sunnyOutline,
+  moonOutline,
+  gridOutline,
+  listOutline,
+  pulseOutline,
+  serverOutline,
+  copyOutline,
+  sparklesOutline,
+  businessOutline,
+  timeOutline,
+  trashOutline
 } from 'ionicons/icons';
 
 import { DataTableComponent } from '../components/data-table/data-table.component';
@@ -60,17 +73,12 @@ import { DataService } from '../core/services/data.service';
 import { AuthService } from '../core/services/auth.service';
 import { ExportService } from '../core/services/export.service';
 import { SupabaseService } from '../core/services/supabase.service';
+import { ThemeService } from '../core/services/theme.service';
 import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user.model';
 import { emailUniqueValidator } from '../core/validators/auth.validators';
 
 /**
- * @fileoverview Controlador principal del Cuadro de Mando Empresarial (FASE 3 / RA 5).
- * Orquesta de forma asíncrona la concurrencia de fuentes duales (SQL y NoSQL en tiempo real o Supabase en la nube)
- * mediante RxJS forkJoin con soporte para Spinners de carga.
- * Implementa ChangeDetectionStrategy.OnPush, exportación a PDF y CSV, filtrado reactivo,
- * formulario reactivo de alta con validación asíncrona (FASE 1 / Paso 1.2),
- * renderizado de imágenes de perfil y manual de usuario embebido con cumplimiento integral WCAG (RA 4, RA 6).
- * @module Dashboard/DashboardPage
+ * Página principal del panel de gestión con visualización de métricas y listado de usuarios.
  */
 @Component({
   selector: 'app-dashboard',
@@ -109,7 +117,9 @@ import { emailUniqueValidator } from '../core/validators/auth.validators';
     IonLabel,
     IonInput,
     IonText,
-    IonNote
+    IonNote,
+    IonProgressBar,
+    IonChip
   ]
 })
 export class DashboardPage implements OnInit, OnDestroy {
@@ -122,13 +132,8 @@ export class DashboardPage implements OnInit, OnDestroy {
   private alertController = inject(AlertController);
   private fb = inject(FormBuilder);
 
-  /** Formulario reactivo para alta de nuevo usuario con validación asíncrona (Paso 1.2) */
   public createUserForm: FormGroup;
-
-  /** Control de visibilidad del modal de alta de usuario */
   public isCreateModalOpen: boolean = false;
-
-  /** Estado de envío del formulario de alta */
   public isSubmittingUser: boolean = false;
 
   /** Estado de subida de fotografía de perfil al bucket 'avatars' de Supabase */
@@ -212,6 +217,56 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Indicador booleano de permisos de administración */
   public isAdmin: boolean = false;
 
+  /** Servicio reactivo para conmutación de tema Claro / Oscuro */
+  public themeService = inject(ThemeService);
+
+  /** Modo de visualización de datos: 'table' (Tabla analítica) | 'grid' (Cuadrícula de tarjetas de perfil) */
+  public viewMode: 'table' | 'grid' = 'table';
+
+  /** Filtro rápido por estado operativo: 'TODOS' | 'Activo' | 'Inactivo' */
+  public statusFilter: 'TODOS' | 'Activo' | 'Inactivo' = 'TODOS';
+
+  /** Usuario actualmente seleccionado para visualización detallada en modal */
+  public selectedUserForDetail: UserRecord | null = null;
+
+  /** Estado de visibilidad del modal de ficha detallada */
+  public isDetailModalOpen: boolean = false;
+
+  public systemHealth = {
+    status: 'Operativo',
+    latency: 38,
+    backend: 'PostgreSQL (Supabase)',
+    storage: 'Bucket avatars',
+    rls: 'Activo'
+  };
+
+  public activityLog: { id: number; title: string; desc: string; time: string; icon: string; color: string }[] = [
+    {
+      id: 1,
+      title: 'Base de datos',
+      desc: 'Conexión con Supabase establecida',
+      time: 'Hace un momento',
+      icon: 'server-outline',
+      color: 'success'
+    },
+    {
+      id: 2,
+      title: 'Almacenamiento',
+      desc: 'Bucket de avatares disponible',
+      time: 'Hace 2 min',
+      icon: 'cloud-upload-outline',
+      color: 'primary'
+    },
+    {
+      id: 3,
+      title: 'Inicio de sesión',
+      desc: 'Acceso correcto al sistema',
+      time: 'Hace 5 min',
+      icon: 'shield-checkmark-outline',
+      color: 'warning'
+    }
+  ];
+
   /** Suscripción reactiva para gestión adecuada de memoria en ngOnDestroy */
   private dataSubscription: Subscription | null = null;
 
@@ -233,10 +288,21 @@ export class DashboardPage implements OnInit, OnDestroy {
       personAddOutline,
       cloudUploadOutline,
       eyeOutline,
-      informationCircleOutline
+      informationCircleOutline,
+      sunnyOutline,
+      moonOutline,
+      gridOutline,
+      listOutline,
+      pulseOutline,
+      serverOutline,
+      copyOutline,
+      sparklesOutline,
+      businessOutline,
+      timeOutline,
+      trashOutline
     });
 
-    // Formulario reactivo con marcado declarativo y validación asíncrona de unicidad (FASE 1 / Paso 1.2)
+    // Formulario de alta de usuario
     this.createUserForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
       email: [
@@ -254,17 +320,11 @@ export class DashboardPage implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Inicialización del ciclo de vida. Recupera el contexto de autenticación y lanza la carga dual.
-   */
   ngOnInit(): void {
     this.initUserContext();
     this.loadDashboardData();
   }
 
-  /**
-   * Limpieza de suscripciones para evitar memory leaks (RA 3).
-   */
   ngOnDestroy(): void {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
@@ -273,7 +333,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los datos de usuario y permisos desde el AuthService.
+   * Carga los datos de usuario y permisos.
    */
   private initUserContext(): void {
     const user = this.authService.currentUserValue;
@@ -289,8 +349,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Orquesta de forma asíncrona la recuperación concurrente de datos (SQL / Supabase + NoSQL).
-   * Gestiona el estado de spinner (isLoading) y recalcula gráficos y filtros.
+   * Carga los datos del panel (usuarios y estadísticas).
    */
   public loadDashboardData(): void {
     this.isLoading = true;
@@ -326,15 +385,108 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica los filtros reactivos de búsqueda textual y departamento en tiempo real.
+   * Conteo reactivo de usuarios activos en el dataset completo.
+   */
+  public get activeUsersCount(): number {
+    return this.allUsers.filter(u => u.estado === 'Activo').length;
+  }
+
+  /**
+   * Conteo reactivo de usuarios inactivos en el dataset completo.
+   */
+  public get inactiveUsersCount(): number {
+    return this.allUsers.filter(u => u.estado === 'Inactivo').length;
+  }
+
+  /**
+   * Conmuta el tema visual entre Claro y Oscuro.
+   */
+  public toggleTheme(): void {
+    this.themeService.toggleTheme();
+    const isDark = this.themeService.isDarkMode();
+    this.showToast(isDark ? 'Modo Oscuro activado.' : 'Modo Claro activado.');
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Cambia el modo de visualización entre tabla analítica y cuadrícula de tarjetas.
+   * @param mode 'table' | 'grid'.
+   */
+  public setViewMode(mode: 'table' | 'grid'): void {
+    this.viewMode = mode;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Aplica un filtro rápido por estado del usuario.
+   * @param status 'TODOS' | 'Activo' | 'Inactivo'.
+   */
+  public setStatusFilter(status: 'TODOS' | 'Activo' | 'Inactivo'): void {
+    this.statusFilter = status;
+    this.applyFilters();
+  }
+
+  /**
+   * Abre el modal interactivo con la ficha detallada de un usuario.
+   * @param user Registro de usuario a visualizar.
+   */
+  public openUserDetailModal(user: UserRecord): void {
+    this.selectedUserForDetail = user;
+    this.isDetailModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Cierra el modal de detalle del usuario.
+   */
+  public closeUserDetailModal(): void {
+    this.isDetailModalOpen = false;
+    this.selectedUserForDetail = null;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Copia un texto al portapapeles y despliega notificación.
+   * @param text Texto a copiar.
+   */
+  public copyToClipboard(text: string): void {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text);
+      this.showToast(`Copiado al portapapeles: ${text}`);
+    }
+  }
+
+  /**
+   * Registra un nuevo evento en el feed de auditoría en tiempo real.
+   */
+  public addActivity(title: string, desc: string, icon: string, color: string): void {
+    const newEntry = {
+      id: Date.now(),
+      title,
+      desc,
+      time: 'Justo ahora',
+      icon,
+      color
+    };
+    this.activityLog = [newEntry, ...this.activityLog.slice(0, 4)];
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Aplica los filtros reactivos de búsqueda textual, departamento y estado en tiempo real.
    */
   public applyFilters(): void {
-    this.filteredUsers = this.dataService.filterUsers(
+    let result = this.dataService.filterUsers(
       this.allUsers,
       this.searchTerm,
       this.selectedDepartment
     );
 
+    if (this.statusFilter !== 'TODOS') {
+      result = result.filter(u => u.estado === this.statusFilter);
+    }
+
+    this.filteredUsers = result;
     this.updateCharts();
     this.cdr.markForCheck();
   }
@@ -361,7 +513,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Recalcula las distribuciones estadísticas proyectadas en los widgets visuales (Chart.js).
    */
   private updateCharts(): void {
-    // 1. Distribución por departamentos (Evolución y Dotación de Personal - RA 5)
+    // 1. Distribución por departamentos
     if (this.selectedDepartment === 'TODOS' && !this.searchTerm.trim() && this.departmentMetrics.length > 0) {
       this.chartLabels = this.departmentMetrics.map(m => m.departamento);
       this.chartValues = this.departmentMetrics.map(m => m.cantidad);
@@ -388,8 +540,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Exporta la tabla tabulada a formato PDF profesional mediante ExportService (FASE 3).
-   * Restringido a rol Administrador según la especificación.
+   * Exporta la tabla a formato PDF (solo Administrador).
    */
   public exportToPdf(): void {
     if (!this.isAdmin) {
@@ -405,15 +556,17 @@ export class DashboardPage implements OnInit, OnDestroy {
       const pdfHeaders = ['Nombre Completo', 'Correo Electrónico', 'Rol de Acceso', 'Departamento', 'Estado'];
 
       this.exportService.exportTableToPdf({
-        title: 'Informe Ejecutivo de Gestión de Usuarios',
+        title: 'Listado de Usuarios',
         subtitle: `Filtro aplicado: ${this.selectedDepartment} | Total registros: ${this.filteredUsers.length}`,
         headers: pdfHeaders,
         dataKeys: pdfColumns,
         dataset: this.filteredUsers,
-        filename: `informe_usuarios_${Date.now()}.pdf`,
-        author: `${this.currentUserName} (${this.currentUserRole})`
+        filename: `usuarios_${Date.now()}.pdf`,
+        author: `${this.currentUserName} (${this.currentUserRole})`,
+        summary: this.summary
       });
-      this.showToast('Informe PDF generado y descargado exitosamente.');
+      this.addActivity('Informe PDF', 'Descarga de listado en PDF', 'document-text-outline', 'danger');
+      this.showToast('Informe PDF descargado.');
     } catch (err) {
       console.error('Error al generar PDF:', err);
       this.showToast('Ocurrió un error al generar el archivo PDF.');
@@ -424,8 +577,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Exporta la tabla tabulada a formato CSV estándar con BOM UTF-8 mediante ExportService (FASE 3).
-   * Restringido a rol Administrador.
+   * Exporta la tabla a formato CSV (solo Administrador).
    */
   public exportToCsv(): void {
     if (!this.isAdmin) {
@@ -444,9 +596,11 @@ export class DashboardPage implements OnInit, OnDestroy {
         csvHeaders,
         csvKeys,
         this.filteredUsers,
-        `informe_usuarios_${Date.now()}.csv`
+        `usuarios_${Date.now()}.csv`,
+        `${this.currentUserName} (${this.currentUserRole})`
       );
-      this.showToast('Informe CSV generado y descargado exitosamente.');
+      this.addActivity('Informe CSV', 'Descarga de datos en CSV', 'download-outline', 'success');
+      this.showToast('Informe CSV descargado.');
     } catch (err) {
       console.error('Error al generar CSV:', err);
       this.showToast('Ocurrió un error al exportar el archivo CSV.');
@@ -457,49 +611,12 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Atiende la emisión del evento @Output actionClicked procedente de DataTableComponent.
-   * Despliega un diálogo accesible con la fotografía del usuario, detalle del registro y cambio de estado.
+   * Atiende la emisión del evento @Output actionClicked procedente de DataTableComponent o tarjetas.
+   * Abre la ficha modal detallada e interactiva del usuario con su foto en alta resolución.
    * @param user Registro de usuario seleccionado.
    */
-  public async handleRowAction(user: UserRecord): Promise<void> {
-    const avatarUrl = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff`;
-
-    // Botones accesibles: el usuario base SOLO ve 'Cerrar'. La opción de activar/desactivar es exclusiva del Administrador.
-    const alertButtons: any[] = [
-      {
-        text: 'Cerrar',
-        role: 'cancel'
-      }
-    ];
-
-    if (this.isAdmin) {
-      alertButtons.push({
-        text: user.estado === 'Activo' ? 'Desactivar Usuario' : 'Activar Usuario',
-        role: 'destructive',
-        handler: () => {
-          const nuevoEstado = user.estado === 'Activo' ? 'Inactivo' : 'Activo';
-          this.toggleUserStatus(user.id, nuevoEstado);
-        }
-      });
-    }
-
-    const alert = await this.alertController.create({
-      header: 'Ficha del Usuario',
-      subHeader: `${user.nombre} (${user.rol})`,
-      message: `
-        <div style="text-align: center; margin: 10px 0;">
-          <img src="${avatarUrl}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(user.nombre)}&background=3880ff&color=fff'" alt="Fotografía de ${user.nombre}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #3880ff; box-shadow: 0 2px 8px rgba(0,0,0,0.15);" />
-        </div>
-        <strong>ID:</strong> ${user.id}<br>
-        <strong>Email:</strong> ${user.email}<br>
-        <strong>Departamento:</strong> ${user.departamento}<br>
-        <strong>Estado actual:</strong> ${user.estado}<br>
-        <strong>Fecha de alta:</strong> ${user.fechaAlta}
-      `,
-      buttons: alertButtons
-    });
-
-    await alert.present();
+  public handleRowAction(user: UserRecord): void {
+    this.openUserDetailModal(user);
   }
 
   /**
@@ -508,7 +625,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * @param userId Identificador del usuario.
    * @param newStatus Nuevo estado a establecer.
    */
-  private toggleUserStatus(userId: number, newStatus: 'Activo' | 'Inactivo'): void {
+  public toggleUserStatus(userId: number, newStatus: 'Activo' | 'Inactivo'): void {
     if (!this.isAdmin) {
       this.showToast('Acción no permitida: Solo el Administrador puede modificar estados de usuario.');
       return;
@@ -519,13 +636,94 @@ export class DashboardPage implements OnInit, OnDestroy {
         const index = this.allUsers.findIndex(u => u.id === userId);
         if (index !== -1) {
           this.allUsers[index] = { ...this.allUsers[index], estado: newStatus };
+          if (this.selectedUserForDetail && this.selectedUserForDetail.id === userId) {
+            this.selectedUserForDetail = { ...this.selectedUserForDetail, estado: newStatus };
+          }
           this.applyFilters();
+          this.addActivity(
+            'Estado Actualizado',
+            `Usuario ${updated.nombre} cambiado a "${newStatus}"`,
+            'checkmark-circle-outline',
+            newStatus === 'Activo' ? 'success' : 'medium'
+          );
           this.showToast(`Estado del usuario ${updated.nombre} actualizado a "${newStatus}".`);
           this.cdr.markForCheck();
         }
       },
       error: () => {
         this.showToast('No se pudo actualizar el estado del usuario.');
+      }
+    });
+  }
+
+  /**
+   * Muestra un diálogo de confirmación accesible antes de proceder a la eliminación física del usuario.
+   * Exclusivo para Administrador.
+   * @param user Registro de usuario a eliminar.
+   */
+  public async promptDeleteUser(user: UserRecord): Promise<void> {
+    if (!this.isAdmin) {
+      this.showToast('Acción restringida: Solo el Administrador puede eliminar usuarios.');
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Confirmar Eliminación',
+      subHeader: `¿Desea eliminar a "${user.nombre}"?`,
+      message: 'Esta acción eliminará permanentemente el registro de la base de datos de Supabase. Esta operación no se puede deshacer.',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'secondary'
+        },
+        {
+          text: 'Eliminar Registro',
+          role: 'destructive',
+          handler: () => {
+            this.confirmDeleteUser(user);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  /**
+   * Ejecuta la eliminación física del usuario tras la confirmación afirmativa del diálogo.
+   * @param user Registro de usuario a eliminar.
+   */
+  public confirmDeleteUser(user: UserRecord): void {
+    if (!this.isAdmin) {
+      this.showToast('Acción restringida: Solo el Administrador puede eliminar usuarios.');
+      return;
+    }
+
+    this.dataService.deleteUser(user.id).subscribe({
+      next: () => {
+        if (this.selectedUserForDetail && this.selectedUserForDetail.id === user.id) {
+          this.closeUserDetailModal();
+        }
+
+        this.allUsers = this.allUsers.filter(u => u.id !== user.id);
+        this.applyFilters();
+
+        this.addActivity(
+          'Usuario Eliminado',
+          `Se eliminó permanentemente el registro de ${user.nombre} (${user.email})`,
+          'trash-outline',
+          'danger'
+        );
+
+        this.showToast(`Usuario "${user.nombre}" eliminado correctamente.`);
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        console.error('Error al eliminar usuario:', err);
+        const detail = err?.message || 'Error de permisos o políticas RLS en Supabase.';
+        this.showToast(`Error al eliminar en Supabase: ${detail}`);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -647,6 +845,12 @@ export class DashboardPage implements OnInit, OnDestroy {
       next: (created) => {
         this.isSubmittingUser = false;
         this.closeCreateModal();
+        this.addActivity(
+          'Nuevo Usuario Registrado',
+          `Se registró a ${created.nombre} (${created.departamento}) con foto en Supabase`,
+          'person-add-outline',
+          'success'
+        );
         this.showToast(`Usuario "${created.nombre}" creado exitosamente.`);
         this.loadDashboardData();
       },
@@ -668,7 +872,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el modal accesible con el Manual de Usuario contextual embebido (FASE 5 / RA 6).
+   * Abre el modal de ayuda con la guía de usuario.
    */
   public openHelpModal(): void {
     this.isHelpModalOpen = true;

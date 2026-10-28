@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import {
   IonApp,
@@ -24,13 +24,14 @@ import {
   documentTextOutline,
   documentTextSharp,
   helpCircleOutline,
-  helpCircleSharp
+  helpCircleSharp,
+  sunnyOutline,
+  moonOutline
 } from 'ionicons/icons';
+import { ThemeService } from './core/services/theme.service';
 
 /**
- * @fileoverview Componente raíz de la aplicación híbrida/PWA (FASE 1 / RA 1).
- * Implementa la estructura global de navegación con SplitPane y Side Menu en Lazy Loading.
- * @module AppComponent
+ * Componente principal de la aplicación.
  */
 @Component({
   selector: 'app-root',
@@ -55,6 +56,8 @@ import {
   ]
 })
 export class AppComponent {
+  public themeService = inject(ThemeService);
+
   /** Enlaces de navegación global accesibles desde el menú lateral */
   public appPages = [
     { title: 'Dashboard', url: '/dashboard', icon: 'stats-chart' },
@@ -70,7 +73,13 @@ export class AppComponent {
       documentTextOutline,
       documentTextSharp,
       helpCircleOutline,
-      helpCircleSharp
+      helpCircleSharp,
+      sunnyOutline,
+      moonOutline
     });
+  }
+
+  public toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 }
