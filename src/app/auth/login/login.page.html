@@ -70,7 +70,7 @@
                 </ion-text>
               }
 
-              @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+              @if ((loginForm.get('email')?.hasError('email') || loginForm.get('email')?.hasError('pattern')) && loginForm.get('email')?.touched) {
                 <ion-text color="danger">
                   <p class="error-text">
                     <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>

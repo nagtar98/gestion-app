@@ -117,3 +117,11 @@ ion-note {
 ion-item.selected {
   --color: var(--ion-color-primary);
 }
+
+ion-item.logout-menu-item {
+  cursor: pointer;
+}
+
+ion-item.theme-menu-item {
+  cursor: pointer;
+}

@@ -74,6 +74,7 @@ import { AuthService } from '../core/services/auth.service';
 import { ExportService } from '../core/services/export.service';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
+import { HelpService } from '../core/services/help.service';
 import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user.model';
 import { emailUniqueValidator } from '../core/validators/auth.validators';
 
@@ -127,6 +128,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private exportService = inject(ExportService);
   private supabaseService = inject(SupabaseService);
+  public helpService = inject(HelpService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private alertController = inject(AlertController);
@@ -199,8 +201,13 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Valores para el widget estadístico de roles */
   public roleChartValues: number[] = [0, 0];
 
-  /** Control de visibilidad del modal de Ayuda / Manual de Usuario embebido */
-  public isHelpModalOpen: boolean = false;
+  /** Control de visibilidad del modal de Ayuda / Guía de usuario */
+  public get isHelpModalOpen(): boolean {
+    return this.helpService.isHelpModalOpen();
+  }
+  public set isHelpModalOpen(val: boolean) {
+    this.helpService.isHelpModalOpen.set(val);
+  }
 
   /** Mensaje informativo desplegado en el ion-toast */
   public toastMessage: string = '';
@@ -308,7 +315,11 @@ export class DashboardPage implements OnInit, OnDestroy {
       email: [
         '',
         {
-          validators: [Validators.required, Validators.email],
+          validators: [
+            Validators.required,
+            Validators.email,
+            Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+          ],
           asyncValidators: [emailUniqueValidator(this.authService)],
           updateOn: 'change'
         }
@@ -875,7 +886,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Abre el modal de ayuda con la guía de usuario.
    */
   public openHelpModal(): void {
-    this.isHelpModalOpen = true;
+    this.helpService.openHelp();
     this.cdr.markForCheck();
   }
 
@@ -883,7 +894,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Cierra el modal de Ayuda / Manual de Usuario.
    */
   public closeHelpModal(): void {
-    this.isHelpModalOpen = false;
+    this.helpService.closeHelp();
     this.cdr.markForCheck();
   }
 

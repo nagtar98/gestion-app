@@ -658,9 +658,9 @@
                   <p class="error-text">El correo electrónico es obligatorio.</p>
                 </ion-text>
               }
-              @if (createUserForm.get('email')?.hasError('email') && createUserForm.get('email')?.touched) {
+              @if ((createUserForm.get('email')?.hasError('email') || createUserForm.get('email')?.hasError('pattern')) && createUserForm.get('email')?.touched) {
                 <ion-text color="danger">
-                  <p class="error-text">El formato del correo es inválido.</p>
+                  <p class="error-text">Introduce un correo válido con dominio (ej: usuario@empresa.com).</p>
                 </ion-text>
               }
               @if (createUserForm.get('email')?.hasError('emailAlreadyExists') && createUserForm.get('email')?.touched && !isNewEmailValidating) {

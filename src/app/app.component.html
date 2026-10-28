@@ -7,26 +7,55 @@
             <ion-list-header role="heading" aria-level="2">Sistema de Gestión</ion-list-header>
             <ion-note>Panel Empresarial</ion-note>
 
-            @for (p of appPages; track p; let i = $index) {
-              <ion-menu-toggle auto-hide="false">
-                <ion-item
-                  routerDirection="root"
-                  [routerLink]="[p.url]"
-                  lines="none"
-                  detail="false"
-                  routerLinkActive="selected"
-                  [attr.aria-label]="p.title"
-                  tabindex="0">
-                  <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'"></ion-icon>
-                  <ion-label>{{ p.title }}</ion-label>
-                </ion-item>
-              </ion-menu-toggle>
-            }
+            <!-- Dashboard -->
+            <ion-menu-toggle auto-hide="false">
+              <ion-item
+                routerDirection="root"
+                [routerLink]="['/dashboard']"
+                lines="none"
+                detail="false"
+                routerLinkActive="selected"
+                aria-label="Dashboard"
+                tabindex="0">
+                <ion-icon aria-hidden="true" slot="start" ios="stats-chart-outline" md="stats-chart-sharp"></ion-icon>
+                <ion-label>Dashboard</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
 
+            <!-- Guía de Usuario -->
+            <ion-menu-toggle auto-hide="false">
+              <ion-item
+                lines="none"
+                detail="false"
+                (click)="openUserGuide()"
+                aria-label="Guía de Usuario"
+                tabindex="0"
+                button>
+                <ion-icon aria-hidden="true" slot="start" ios="help-circle-outline" md="help-circle-sharp"></ion-icon>
+                <ion-label>Guía de Usuario</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
+
+            <!-- Conmutador de Tema Claro / Oscuro -->
             <ion-item lines="none" class="theme-menu-item" (click)="toggleTheme()" tabindex="0" button>
               <ion-icon [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'" slot="start" aria-hidden="true"></ion-icon>
               <ion-label>{{ themeService.isDarkMode() ? 'Modo Claro' : 'Modo Oscuro' }}</ion-label>
             </ion-item>
+
+            <!-- Cerrar Sesión (Último de la lista) -->
+            <ion-menu-toggle auto-hide="false">
+              <ion-item
+                lines="none"
+                detail="false"
+                (click)="logout()"
+                aria-label="Cerrar Sesión"
+                tabindex="0"
+                button
+                class="logout-menu-item">
+                <ion-icon aria-hidden="true" slot="start" ios="log-out-outline" md="log-out-sharp" color="danger"></ion-icon>
+                <ion-label color="danger">Cerrar Sesión</ion-label>
+              </ion-item>
+            </ion-menu-toggle>
           </ion-list>
         </nav>
       </ion-content>

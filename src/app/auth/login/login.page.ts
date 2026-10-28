@@ -103,7 +103,11 @@ export class LoginPage {
       email: [
         '',
         {
-          validators: [Validators.required, Validators.email],
+          validators: [
+            Validators.required,
+            Validators.email,
+            Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+          ],
           asyncValidators: [emailExistsValidator(this.authService)],
           updateOn: 'change'
         }
