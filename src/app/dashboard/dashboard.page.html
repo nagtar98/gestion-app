@@ -1,13 +1,870 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>dashboard</ion-title>
+<ion-header class="app-header">
+  <ion-toolbar color="primary" class="header-toolbar">
+    <div class="header-title-wrapper" slot="start">
+      <ion-icon name="sparkles-outline" class="header-logo-icon" aria-hidden="true"></ion-icon>
+      <div class="header-titles">
+        <ion-title class="main-title">Cuadro de Mando Empresarial</ion-title>
+        <span class="header-subtitle ion-hide-sm-down">
+          <span class="pulse-indicator"></span>
+          Conectado a Supabase Cloud
+        </span>
+      </div>
+    </div>
+
+    <ion-buttons slot="end">
+      <!-- Botón interactivo de cambio de tema Claro / Oscuro -->
+      <ion-button
+        fill="clear"
+        (click)="toggleTheme()"
+        [attr.aria-label]="themeService.isDarkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        tabindex="0"
+        class="theme-toggle-btn">
+        <ion-icon [name]="themeService.isDarkMode() ? 'sunny-outline' : 'moon-outline'" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+
+      <!-- Indicador de rol y usuario autenticado -->
+      <ion-badge
+        [color]="isAdmin ? 'warning' : 'light'"
+        class="user-role-badge ion-hide-sm-down"
+        aria-label="Rol del usuario actual">
+        <ion-icon [name]="isAdmin ? 'shield-checkmark-outline' : 'people-outline'" aria-hidden="true"></ion-icon>
+        <span>{{ currentUserName }} ({{ currentUserRole }})</span>
+      </ion-badge>
+
+      <!-- Botón de actualización de datos -->
+      <ion-button
+        fill="clear"
+        (click)="loadDashboardData()"
+        [disabled]="isLoading"
+        aria-label="Actualizar datos asíncronos"
+        tabindex="0">
+        <ion-icon name="refresh-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+
+      <!-- Botón de apertura del Manual de Usuario embebido -->
+      <ion-button
+        fill="clear"
+        (click)="openHelpModal()"
+        aria-label="Abrir manual de usuario y sistema de ayuda"
+        tabindex="0">
+        <ion-icon name="help-circle-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+
+      <!-- Botón para cerrar sesión de forma segura -->
+      <ion-button
+        fill="clear"
+        (click)="logout()"
+        aria-label="Cerrar sesión y salir del sistema"
+        tabindex="0">
+        <ion-icon name="log-out-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">dashboard</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content class="ion-padding dashboard-content">
+  
+  <!-- Spinner de carga -->
+  @if (isLoading) {
+    <div class="loading-container" role="status" aria-live="polite">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p class="loading-text">Sincronizando orígenes de datos (SQL y NoSQL)...</p>
+    </div>
+  } @else {
+    <main class="dashboard-main" role="main">
+
+      <!-- Fila de Tarjetas de Indicadores Clave (KPIs Consolidados) -->
+      <section class="kpi-section" aria-label="Indicadores Clave de Rendimiento">
+        <ion-grid class="ion-no-padding">
+          <ion-row>
+            <ion-col size="12" size-sm="6" size-md="3">
+              <ion-card class="kpi-card kpi-card-users" tabindex="0" aria-label="Total de usuarios registrados: {{ summary.totalUsuarios }}">
+                <ion-card-content>
+                  <div class="kpi-content-top">
+                    <div class="kpi-icon-box bg-blue">
+                      <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+                    </div>
+                    <span class="kpi-badge badge-blue">Catálogo</span>
+                  </div>
+                  <div class="kpi-value">{{ summary.totalUsuarios }}</div>
+                  <div class="kpi-label">Total Usuarios</div>
+                  <div class="kpi-trend">Base de datos PostgreSQL en vivo</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <ion-col size="12" size-sm="6" size-md="3">
+              <ion-card class="kpi-card kpi-card-active" tabindex="0" aria-label="Usuarios activos: {{ summary.usuariosActivos }}">
+                <ion-card-content>
+                  <div class="kpi-content-top">
+                    <div class="kpi-icon-box bg-green">
+                      <ion-icon name="checkmark-circle-outline" aria-hidden="true"></ion-icon>
+                    </div>
+                    <span class="kpi-badge badge-green">Operativos</span>
+                  </div>
+                  <div class="kpi-value text-success">{{ summary.usuariosActivos }}</div>
+                  <div class="kpi-label">Usuarios Activos</div>
+                  <div class="kpi-trend">Cuentas con acceso habilitado</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <ion-col size="12" size-sm="6" size-md="3">
+              <ion-card class="kpi-card kpi-card-depts" tabindex="0" aria-label="Total de departamentos: {{ summary.totalDepartamentos }}">
+                <ion-card-content>
+                  <div class="kpi-content-top">
+                    <div class="kpi-icon-box bg-amber">
+                      <ion-icon name="business-outline" aria-hidden="true"></ion-icon>
+                    </div>
+                    <span class="kpi-badge badge-amber">Estructura</span>
+                  </div>
+                  <div class="kpi-value text-warning">{{ summary.totalDepartamentos }}</div>
+                  <div class="kpi-label">Departamentos</div>
+                  <div class="kpi-trend">Áreas organizativas de la empresa</div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <ion-col size="12" size-sm="6" size-md="3">
+              <ion-card class="kpi-card kpi-card-rate" tabindex="0" aria-label="Tasa de actividad: {{ summary.tasaActividad }} por ciento">
+                <ion-card-content>
+                  <div class="kpi-content-top">
+                    <div class="kpi-icon-box bg-indigo">
+                      <ion-icon name="pulse-outline" aria-hidden="true"></ion-icon>
+                    </div>
+                    <span class="kpi-badge badge-indigo">{{ summary.tasaActividad >= 70 ? 'Óptimo' : 'Regular' }}</span>
+                  </div>
+                  <div class="kpi-value text-indigo">{{ summary.tasaActividad }}%</div>
+                  <div class="kpi-label">Tasa de Actividad</div>
+                  <ion-progress-bar [value]="summary.tasaActividad / 100" color="success" class="kpi-progress-bar"></ion-progress-bar>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </section>
+
+      <!-- Fila de Nuevos Widgets: Salud de Infraestructura y Registro de Actividad -->
+      <section class="extra-widgets-section ion-margin-top" aria-label="Servicios Cloud y Auditoría">
+        <ion-grid class="ion-no-padding">
+          <ion-row>
+            <!-- Widget de Estado del Sistema -->
+            <ion-col size="12" size-lg="6">
+              <ion-card class="feature-widget-card">
+                <ion-card-header>
+                  <div class="widget-header-flex">
+                    <div class="widget-header-left">
+                      <ion-icon name="server-outline" class="widget-icon text-primary" aria-hidden="true"></ion-icon>
+                      <div>
+                        <ion-card-title class="widget-card-title">Estado del sistema</ion-card-title>
+                        <ion-card-subtitle>Servicios conectados</ion-card-subtitle>
+                      </div>
+                    </div>
+                    <ion-badge color="success" class="status-live-badge">
+                      <span class="pulse-indicator"></span>
+                      {{ systemHealth.status }}
+                    </ion-badge>
+                  </div>
+                </ion-card-header>
+                <ion-card-content>
+                  <div class="health-items-grid">
+                    <div class="health-item">
+                      <span class="health-label">Base de datos</span>
+                      <span class="health-val font-semibold">{{ systemHealth.backend }}</span>
+                    </div>
+                    <div class="health-item">
+                      <span class="health-label">Almacenamiento</span>
+                      <span class="health-val text-success font-semibold">{{ systemHealth.storage }}</span>
+                    </div>
+                    <div class="health-item">
+                      <span class="health-label">Latencia</span>
+                      <span class="health-val font-semibold">~{{ systemHealth.latency }} ms</span>
+                    </div>
+                    <div class="health-item">
+                      <span class="health-label">Seguridad RLS</span>
+                      <span class="health-val text-primary font-semibold">{{ systemHealth.rls }}</span>
+                    </div>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+
+            <!-- Widget de Actividad Reciente -->
+            <ion-col size="12" size-lg="6">
+              <ion-card class="feature-widget-card">
+                <ion-card-header>
+                  <div class="widget-header-flex">
+                    <div class="widget-header-left">
+                      <ion-icon name="time-outline" class="widget-icon text-secondary" aria-hidden="true"></ion-icon>
+                      <div>
+                        <ion-card-title class="widget-card-title">Actividad reciente</ion-card-title>
+                        <ion-card-subtitle>Últimas acciones registradas</ion-card-subtitle>
+                      </div>
+                    </div>
+                    <ion-badge color="tertiary" class="log-count-badge">
+                      {{ activityLog.length }} eventos
+                    </ion-badge>
+                  </div>
+                </ion-card-header>
+                <ion-card-content>
+                  <div class="activity-feed">
+                    @for (act of activityLog; track act.id) {
+                      <div class="activity-feed-item">
+                        <div class="activity-icon-bullet" [class]="'color-' + act.color">
+                          <ion-icon [name]="act.icon" aria-hidden="true"></ion-icon>
+                        </div>
+                        <div class="activity-details">
+                          <div class="activity-top">
+                            <span class="activity-title">{{ act.title }}</span>
+                            <span class="activity-time">{{ act.time }}</span>
+                          </div>
+                          <p class="activity-desc">{{ act.desc }}</p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </section>
+
+      <!-- Fila de Gráficos Estadísticos -->
+      <section class="charts-section ion-margin-top" aria-label="Gráficos y Métricas">
+        <ion-grid class="ion-no-padding">
+          <ion-row>
+            <ion-col size="12" size-md="6">
+              <app-stat-widget
+                title="Usuarios por Departamento"
+                type="line"
+                [labels]="chartLabels"
+                [data]="chartValues">
+              </app-stat-widget>
+            </ion-col>
+
+            <ion-col size="12" size-md="6">
+              <app-stat-widget
+                title="Distribución por Rol"
+                type="doughnut"
+                [labels]="roleChartLabels"
+                [data]="roleChartValues">
+              </app-stat-widget>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </section>
+
+      <!-- Barra de Herramientas de Filtrado Reactivo y Exportación de Informes -->
+      <section class="toolbar-section ion-margin-top" aria-label="Filtros y Herramientas de Exportación">
+        <ion-card class="filter-card">
+          <ion-card-content>
+            <ion-row class="ion-align-items-center">
+              
+              <!-- Buscador en tiempo real accesible -->
+              <ion-col size="12" size-md="5">
+                <ion-searchbar
+                  [value]="searchTerm"
+                  (ionInput)="onSearchChange($event)"
+                  placeholder="Buscar por nombre, correo o rol..."
+                  debounce="300"
+                  aria-label="Filtrar usuarios en tiempo real"
+                  class="modern-searchbar"
+                  tabindex="0">
+                </ion-searchbar>
+              </ion-col>
+
+              <!-- Selector de departamentos -->
+              <ion-col size="12" size-sm="6" size-md="3">
+                <ion-select
+                  aria-label="Filtrar por Departamento"
+                  placeholder="Departamento"
+                  [value]="selectedDepartment"
+                  (ionChange)="onDepartmentChange($event)"
+                  interface="popover"
+                  fill="outline"
+                  class="dept-select">
+                  @for (dept of departmentsList; track dept) {
+                    <ion-select-option [value]="dept">
+                      {{ dept }}
+                    </ion-select-option>
+                  }
+                </ion-select>
+              </ion-col>
+
+              <!-- Botones de Exportación a PDF y CSV (Exclusivo Administrador) -->
+              <ion-col size="12" size-sm="6" size-md="4" class="export-actions ion-text-end">
+                @if (isAdmin) {
+                  <ion-button
+                    fill="outline"
+                    color="danger"
+                    size="small"
+                    (click)="exportToPdf()"
+                    [disabled]="isExporting"
+                    aria-label="Exportar tabla a formato PDF"
+                    tabindex="0">
+                    <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
+                    <span>Exportar PDF</span>
+                  </ion-button>
+
+                  <ion-button
+                    fill="outline"
+                    color="success"
+                    size="small"
+                    (click)="exportToCsv()"
+                    [disabled]="isExporting"
+                    aria-label="Exportar tabla a formato CSV"
+                    tabindex="0">
+                    <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
+                    <span>Exportar CSV</span>
+                  </ion-button>
+                } @else {
+                  <ion-badge color="medium" class="readonly-mode-badge" aria-label="Modo solo consulta">
+                    <ion-icon name="eye-outline" aria-hidden="true"></ion-icon>
+                    <span>Modo Consulta (Solo Lectura)</span>
+                  </ion-badge>
+                }
+              </ion-col>
+            </ion-row>
+
+            <!-- Fila de Chips de Filtro Rápido y Selector de Vista (Tabla vs Cuadrícula) -->
+            <div class="filter-chips-row ion-margin-top">
+              <div class="chips-group">
+                <span class="chips-label">Estado:</span>
+                <ion-chip
+                  [outline]="statusFilter !== 'TODOS'"
+                  [color]="statusFilter === 'TODOS' ? 'primary' : 'medium'"
+                  (click)="setStatusFilter('TODOS')">
+                  <ion-label>Todos ({{ allUsers.length }})</ion-label>
+                </ion-chip>
+                <ion-chip
+                  [outline]="statusFilter !== 'Activo'"
+                  [color]="statusFilter === 'Activo' ? 'success' : 'medium'"
+                  (click)="setStatusFilter('Activo')">
+                  <ion-label>Activos ({{ activeUsersCount }})</ion-label>
+                </ion-chip>
+                <ion-chip
+                  [outline]="statusFilter !== 'Inactivo'"
+                  [color]="statusFilter === 'Inactivo' ? 'danger' : 'medium'"
+                  (click)="setStatusFilter('Inactivo')">
+                  <ion-label>Inactivos ({{ inactiveUsersCount }})</ion-label>
+                </ion-chip>
+              </div>
+
+              <!-- Selector de Vista: Tabla o Tarjetas -->
+              <div class="view-toggle-box">
+                <span class="view-label ion-hide-sm-down">Vista:</span>
+                <ion-button
+                  size="small"
+                  [fill]="viewMode === 'table' ? 'solid' : 'outline'"
+                  [color]="viewMode === 'table' ? 'primary' : 'medium'"
+                  (click)="setViewMode('table')"
+                  aria-label="Ver datos en formato tabla">
+                  <ion-icon name="list-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+                </ion-button>
+                <ion-button
+                  size="small"
+                  [fill]="viewMode === 'grid' ? 'solid' : 'outline'"
+                  [color]="viewMode === 'grid' ? 'primary' : 'medium'"
+                  (click)="setViewMode('grid')"
+                  aria-label="Ver datos en cuadrícula de tarjetas">
+                  <ion-icon name="grid-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+                </ion-button>
+              </div>
+            </div>
+
+            <!-- Aviso de permisos para rol de usuario estándar -->
+            @if (!isAdmin) {
+              <div class="admin-notice">
+                <small>
+                  <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+                  Estás en <strong>modo lectura</strong>. Solo los administradores pueden añadir, editar o eliminar usuarios y exportar informes.
+                </small>
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+      <!-- Sección de Usuarios -->
+      <section class="table-section ion-margin-top" aria-label="Listado de Usuarios">
+        <ion-card class="table-card">
+          <ion-card-header>
+            <div class="card-header-flex">
+              <div>
+                <ion-card-title>Listado de Usuarios</ion-card-title>
+                <ion-card-subtitle>
+                  Mostrando {{ filteredUsers.length }} de {{ allUsers.length }} usuarios
+                </ion-card-subtitle>
+              </div>
+
+              <!-- Botón para dar de alta nuevo registro (Exclusivo Administrador) -->
+              @if (isAdmin) {
+                <ion-button
+                  color="primary"
+                  size="small"
+                  (click)="openCreateModal()"
+                  aria-label="Dar de alta un nuevo usuario en el sistema"
+                  tabindex="0">
+                  <ion-icon name="person-add-outline" slot="start" aria-hidden="true"></ion-icon>
+                  <span>Nuevo Registro</span>
+                </ion-button>
+              }
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            <!-- Vista 1: Tabla Analítica Clásica -->
+            @if (viewMode === 'table') {
+              <app-data-table
+                [columns]="tableColumns"
+                [dataset]="filteredUsers"
+                [columnLabels]="columnLabels"
+                [isAdmin]="isAdmin"
+                tableCaption="Directorio de empleados y roles del sistema"
+                (actionClicked)="handleRowAction($event)"
+                (deleteClicked)="promptDeleteUser($event)">
+              </app-data-table>
+            }
+
+            <!-- Vista 2: Cuadrícula Moderna de Tarjetas de Perfil (Cards Grid) -->
+            @if (viewMode === 'grid') {
+              <div class="user-cards-grid">
+                @if (filteredUsers.length === 0) {
+                  <div class="empty-grid-state">
+                    <ion-icon name="people-outline" class="empty-icon"></ion-icon>
+                    <p>No se encontraron registros que coincidan con los criterios seleccionados.</p>
+                  </div>
+                }
+
+                @for (user of filteredUsers; track user.id) {
+                  <div class="user-card-item">
+                    <div class="user-card-header-row">
+                      <ion-badge [color]="user.rol === 'Administrador' ? 'primary' : 'tertiary'" class="role-pill">
+                        {{ user.rol }}
+                      </ion-badge>
+                      <ion-badge [color]="user.estado === 'Activo' ? 'success' : 'medium'" class="status-pill">
+                        <span class="status-dot" [class.dot-active]="user.estado === 'Activo'"></span>
+                        {{ user.estado }}
+                      </ion-badge>
+                    </div>
+
+                    <div class="user-avatar-wrapper">
+                      <img
+                        [src]="user.avatar || 'https://ui-avatars.com/api/?name=' + user.nombre + '&background=2563eb&color=fff'"
+                        [alt]="'Fotografía de ' + user.nombre"
+                        class="user-card-avatar"
+                        loading="lazy" />
+                    </div>
+
+                    <h3 class="user-card-name">{{ user.nombre }}</h3>
+                    <p class="user-card-dept">{{ user.departamento }}</p>
+
+                    <div class="user-card-email-box" (click)="copyToClipboard(user.email)" title="Clic para copiar correo">
+                        <ion-icon name="copy-outline" aria-hidden="true"></ion-icon>
+                        <span class="email-text">{{ user.email }}</span>
+                    </div>
+
+                    <div class="user-card-date">
+                      <span>Alta: {{ user.fechaAlta }}</span>
+                    </div>
+
+                    <div class="user-card-actions">
+                      <ion-button
+                        size="small"
+                        fill="outline"
+                        color="primary"
+                        expand="block"
+                        (click)="openUserDetailModal(user)">
+                        <ion-icon name="eye-outline" slot="start" aria-hidden="true"></ion-icon>
+                        Ver Ficha
+                      </ion-button>
+
+                      @if (isAdmin) {
+                        <div class="card-admin-action-row">
+                          <ion-button
+                            size="small"
+                            fill="clear"
+                            [color]="user.estado === 'Activo' ? 'warning' : 'success'"
+                            (click)="toggleUserStatus(user.id, user.estado === 'Activo' ? 'Inactivo' : 'Activo')">
+                            {{ user.estado === 'Activo' ? 'Desactivar' : 'Activar' }}
+                          </ion-button>
+
+                          <ion-button
+                            size="small"
+                            fill="clear"
+                            color="danger"
+                            (click)="promptDeleteUser(user)"
+                            [attr.aria-label]="'Eliminar usuario ' + user.nombre">
+                            <ion-icon name="trash-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+                          </ion-button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </ion-card-content>
+        </ion-card>
+      </section>
+
+    </main>
+  }
+
+  <!-- Modal Accesible: Ficha Detallada de Usuario (Modern Profile Drawer / Modal) -->
+  <ion-modal [isOpen]="isDetailModalOpen" (didDismiss)="closeUserDetailModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Ficha del Empleado</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeUserDetailModal()" aria-label="Cerrar ficha de usuario">
+              <ion-icon name="close-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      @if (selectedUserForDetail) {
+        <ion-content class="ion-padding user-detail-modal-content">
+          <div class="profile-modal-card">
+            <div class="profile-avatar-large-box">
+              <img
+                [src]="selectedUserForDetail.avatar || 'https://ui-avatars.com/api/?name=' + selectedUserForDetail.nombre + '&background=2563eb&color=fff'"
+                [alt]="'Fotografía de ' + selectedUserForDetail.nombre"
+                class="profile-avatar-large" />
+              <ion-badge
+                [color]="selectedUserForDetail.estado === 'Activo' ? 'success' : 'medium'"
+                class="profile-status-float">
+                {{ selectedUserForDetail.estado }}
+              </ion-badge>
+            </div>
+
+            <h2 class="profile-name">{{ selectedUserForDetail.nombre }}</h2>
+            <ion-badge [color]="selectedUserForDetail.rol === 'Administrador' ? 'primary' : 'tertiary'" class="profile-role-badge">
+              {{ selectedUserForDetail.rol }}
+            </ion-badge>
+
+            <div class="profile-info-list ion-margin-top">
+              <div class="info-row">
+                <span class="info-key">Identificador (ID):</span>
+                <span class="info-val font-semibold">#{{ selectedUserForDetail.id }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Correo Electrónico:</span>
+                <span class="info-val email-link" (click)="copyToClipboard(selectedUserForDetail.email)">
+                  {{ selectedUserForDetail.email }}
+                  <ion-icon name="copy-outline" aria-hidden="true"></ion-icon>
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Departamento:</span>
+                <span class="info-val">{{ selectedUserForDetail.departamento }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-key">Fecha de Registro:</span>
+                <span class="info-val">{{ selectedUserForDetail.fechaAlta }}</span>
+              </div>
+            </div>
+
+            <div class="profile-actions-box ion-margin-top">
+              @if (isAdmin) {
+                <ion-button
+                  expand="block"
+                  [color]="selectedUserForDetail.estado === 'Activo' ? 'warning' : 'success'"
+                  (click)="toggleUserStatus(selectedUserForDetail.id, selectedUserForDetail.estado === 'Activo' ? 'Inactivo' : 'Activo')">
+                  {{ selectedUserForDetail.estado === 'Activo' ? 'Desactivar Cuenta' : 'Activar Cuenta' }}
+                </ion-button>
+
+                <ion-button
+                  expand="block"
+                  color="danger"
+                  (click)="promptDeleteUser(selectedUserForDetail)"
+                  class="ion-margin-top">
+                  <ion-icon name="trash-outline" slot="start" aria-hidden="true"></ion-icon>
+                  Eliminar Usuario
+                </ion-button>
+              }
+              <ion-button expand="block" fill="outline" color="medium" (click)="closeUserDetailModal()" class="ion-margin-top">
+                Cerrar Ficha
+              </ion-button>
+            </div>
+          </div>
+        </ion-content>
+      }
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal: Alta de Nuevo Usuario -->
+  <ion-modal [isOpen]="isCreateModalOpen" (didDismiss)="closeCreateModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Alta de Nuevo Usuario</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeCreateModal()" aria-label="Cerrar modal de alta">
+              <ion-icon name="close-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="createUserForm" (ngSubmit)="onCreateUserSubmit()" novalidate aria-label="Formulario de alta de nuevo empleado">
+          
+          <!-- Nombre Completo -->
+          <div class="form-group ion-margin-bottom">
+            <ion-input
+              label="Nombre Completo *"
+              labelPlacement="floating"
+              fill="outline"
+              type="text"
+              formControlName="nombre"
+              aria-required="true"
+              tabindex="1">
+            </ion-input>
+            @if (createUserForm.get('nombre')?.invalid && createUserForm.get('nombre')?.touched) {
+              <ion-text color="danger">
+                <p class="error-text">El nombre es obligatorio y debe tener al menos 3 caracteres.</p>
+              </ion-text>
+            }
+          </div>
+
+          <!-- Correo Electrónico con Validación Asíncrona de Unicidad -->
+          <div class="form-group ion-margin-bottom">
+            <ion-input
+              label="Correo Electrónico *"
+              labelPlacement="floating"
+              fill="outline"
+              type="email"
+              formControlName="email"
+              aria-required="true"
+              tabindex="2">
+              @if (isNewEmailValidating) {
+                <ion-spinner slot="end" name="crescent" color="primary"></ion-spinner>
+              }
+            </ion-input>
+
+            <div role="alert" aria-live="polite">
+              @if (isNewEmailValidating) {
+                <ion-note color="primary" class="status-note">
+                  <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+                  Comprobando disponibilidad del correo en Supabase...
+                </ion-note>
+              }
+              @if (createUserForm.get('email')?.hasError('required') && createUserForm.get('email')?.touched) {
+                <ion-text color="danger">
+                  <p class="error-text">El correo electrónico es obligatorio.</p>
+                </ion-text>
+              }
+              @if (createUserForm.get('email')?.hasError('email') && createUserForm.get('email')?.touched) {
+                <ion-text color="danger">
+                  <p class="error-text">El formato del correo es inválido.</p>
+                </ion-text>
+              }
+              @if (createUserForm.get('email')?.hasError('emailAlreadyExists') && createUserForm.get('email')?.touched && !isNewEmailValidating) {
+                <ion-text color="danger">
+                  <p class="error-text">Este correo ya está registrado en el sistema. Debe ser único.</p>
+                </ion-text>
+              }
+            </div>
+          </div>
+
+          <!-- Rol de Acceso -->
+          <div class="form-group ion-margin-bottom">
+            <ion-select
+              label="Rol de Acceso *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="rol"
+              interface="popover"
+              tabindex="3">
+              <ion-select-option value="Usuario Estandar">Usuario Estándar</ion-select-option>
+              <ion-select-option value="Administrador">Administrador</ion-select-option>
+            </ion-select>
+          </div>
+
+          <!-- Departamento -->
+          <div class="form-group ion-margin-bottom">
+            <ion-select
+              label="Departamento *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="departamento"
+              interface="popover"
+              tabindex="4">
+              <ion-select-option value="Desarrollo">Desarrollo</ion-select-option>
+              <ion-select-option value="Soporte">Soporte</ion-select-option>
+              <ion-select-option value="Ventas">Ventas</ion-select-option>
+              <ion-select-option value="Marketing">Marketing</ion-select-option>
+              <ion-select-option value="Finanzas">Finanzas</ion-select-option>
+            </ion-select>
+          </div>
+
+          <!-- Estado Operativo -->
+          <div class="form-group ion-margin-bottom">
+            <ion-select
+              label="Estado Inicial *"
+              labelPlacement="floating"
+              fill="outline"
+              formControlName="estado"
+              interface="popover"
+              tabindex="5">
+              <ion-select-option value="Activo">Activo</ion-select-option>
+              <ion-select-option value="Inactivo">Inactivo</ion-select-option>
+            </ion-select>
+          </div>
+
+          <!-- Fotografía de Perfil con subida obligatoria desde el equipo a Supabase Storage -->
+          <div class="form-group ion-margin-bottom avatar-group">
+            <ion-label class="avatar-label">
+              Fotografía de Perfil (Subida desde el equipo) *
+            </ion-label>
+
+            <div class="avatar-field-container">
+              @if (avatarUploadPreview || createUserForm.get('avatar')?.value) {
+                <div class="avatar-preview-box">
+                  <img
+                    [src]="avatarUploadPreview || createUserForm.get('avatar')?.value"
+                    alt="Vista previa de la fotografía"
+                    class="avatar-preview-thumb" />
+                </div>
+              }
+
+              <div class="avatar-inputs-box">
+                <input
+                  #avatarFileInput
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/gif"
+                  (change)="onAvatarFileSelected($event)"
+                  style="display: none;"
+                  id="avatarFileInput" />
+
+                <ion-button
+                  type="button"
+                  [fill]="createUserForm.get('avatar')?.value ? 'solid' : 'outline'"
+                  size="small"
+                  [color]="createUserForm.get('avatar')?.value ? 'success' : 'primary'"
+                  (click)="avatarFileInput.click()"
+                  [disabled]="isUploadingAvatar">
+                  @if (isUploadingAvatar) {
+                    <ion-spinner name="crescent" slot="start"></ion-spinner>
+                  } @else if (createUserForm.get('avatar')?.value) {
+                    <ion-icon name="checkmark-circle-outline" slot="start" aria-hidden="true"></ion-icon>
+                  } @else {
+                    <ion-icon name="cloud-upload-outline" slot="start" aria-hidden="true"></ion-icon>
+                  }
+                  <span>
+                    {{ isUploadingAvatar ? 'Subiendo al Bucket...' : (createUserForm.get('avatar')?.value ? 'Cambiar Foto' : 'Seleccionar Foto desde el Equipo') }}
+                  </span>
+                </ion-button>
+
+                @if (createUserForm.get('avatar')?.value) {
+                  <ion-badge color="success" class="avatar-status-badge">
+                    ✓ Imagen subida y guardada en el bucket avatars
+                  </ion-badge>
+                }
+              </div>
+            </div>
+
+            @if (createUserForm.get('avatar')?.touched && createUserForm.get('avatar')?.invalid) {
+              <ion-note color="danger" class="ion-padding-start error-text">
+                Es obligatorio seleccionar y subir una fotografía desde tu equipo.
+              </ion-note>
+            } @else {
+              <ion-note color="medium" class="ion-padding-start">
+                La fotografía se subirá y guardará directamente en el bucket <code>avatars</code> de Supabase.
+              </ion-note>
+            }
+          </div>
+
+          <!-- Botón de Envío -->
+          <ion-button
+            expand="block"
+            type="submit"
+            [disabled]="createUserForm.invalid || isSubmittingUser || isNewEmailValidating"
+            class="ion-margin-top submit-btn"
+            tabindex="7">
+            @if (isSubmittingUser) {
+              <ion-spinner name="crescent" slot="start"></ion-spinner>
+            }
+            <span>{{ isSubmittingUser ? 'Registrando en Supabase...' : 'Guardar Nuevo Registro' }}</span>
+          </ion-button>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Modal: Guía de Usuario -->
+  <ion-modal [isOpen]="isHelpModalOpen" (didDismiss)="closeHelpModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>Guía de Uso</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeHelpModal()" aria-label="Cerrar modal de ayuda">
+              <ion-icon name="close-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding help-modal-content">
+        <article class="help-article" role="document">
+          <h2>1. Introducción</h2>
+          <p>
+            Esta aplicación permite gestionar el personal de la empresa, consultar métricas y exportar informes en formatos PDF y CSV.
+          </p>
+
+          <h2>2. Roles de usuario</h2>
+          <ul>
+            <li>
+              <strong>Administrador:</strong> Puede consultar, crear, modificar el estado y eliminar usuarios, además de exportar informes en PDF y CSV.
+            </li>
+            <li>
+              <strong>Usuario Estándar:</strong> Modo lectura para consultar el catálogo de empleados y las estadísticas de la empresa.
+            </li>
+          </ul>
+
+          <h2>3. Cuadro de Mando, Vistas y Métricas</h2>
+          <p>
+            El panel cuenta con widgets de salud de infraestructura en tiempo real (Supabase PostgreSQL y Storage Bucket <code>avatars</code>),
+            auditoría de eventos recientes y gráficos interactivos (evolución por departamento y proporción de roles).
+            Además, puedes alternar entre la <strong>Vista Tabla</strong> y la <strong>Vista Cuadrícula</strong> para inspeccionar la plantilla de forma visual.
+          </p>
+
+          <h2>4. Generación y Descarga de Informes</h2>
+          <p>
+            Haga clic en <em>Exportar PDF</em> para generar un informe ejecutivo con cabecera corporativa y paginación,
+            o en <em>Exportar CSV</em> para obtener un fichero compatible con Microsoft Excel y hojas de cálculo (UTF-8 con BOM).
+          </p>
+
+          <h2>5. Personalización y Accesibilidad</h2>
+          <ul>
+            <li>Utilice el botón de Sol/Luna en la cabecera para alternar entre <strong>Modo Claro</strong> y <strong>Modo Oscuro</strong> según su entorno.</li>
+            <li>Utilice la tecla <code>Tab</code> y <code>Shift + Tab</code> para desplazarse ordenadamente entre campos y controles.</li>
+            <li>Presione <code>Enter</code> o <code>Espacio</code> para activar botones y desplegables.</li>
+            <li>Todos los componentes incorporan atributos <code>WAI-ARIA</code> compatibles con lectores de pantalla.</li>
+          </ul>
+        </article>
+
+        <div class="ion-text-center ion-margin-top ion-padding-bottom">
+          <ion-button (click)="closeHelpModal()" expand="block" color="primary">
+            Entendido, volver a la aplicación
+          </ion-button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Notificaciones Toast de Feedback al Usuario -->
+  <ion-toast
+    [isOpen]="isToastOpen"
+    [message]="toastMessage"
+    [duration]="3000"
+    (didDismiss)="isToastOpen = false"
+    position="bottom">
+  </ion-toast>
+
 </ion-content>

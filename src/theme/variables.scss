@@ -1,2 +1,118 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// ====================================================================
+// Variables de tema y paleta de colores
+// ====================================================================
+
+:root {
+  /* Paleta Corporativa Principal */
+  --ion-color-primary: #2563eb;
+  --ion-color-primary-rgb: 37, 99, 235;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #1d4ed8;
+  --ion-color-primary-tint: #3b82f6;
+
+  --ion-color-secondary: #0ea5e9;
+  --ion-color-secondary-rgb: 14, 165, 233;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #0284c7;
+  --ion-color-secondary-tint: #38bdf8;
+
+  --ion-color-tertiary: #6366f1;
+  --ion-color-tertiary-rgb: 99, 102, 241;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-shade: #4f46e5;
+  --ion-color-tertiary-tint: #818cf8;
+
+  --ion-color-success: #10b981;
+  --ion-color-success-rgb: 16, 185, 129;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-shade: #059669;
+  --ion-color-success-tint: #34d399;
+
+  --ion-color-warning: #f59e0b;
+  --ion-color-warning-rgb: 245, 158, 11;
+  --ion-color-warning-contrast: #ffffff;
+  --ion-color-warning-shade: #d97706;
+  --ion-color-warning-tint: #fbbf24;
+
+  --ion-color-danger: #ef4444;
+  --ion-color-danger-rgb: 239, 68, 68;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-shade: #dc2626;
+  --ion-color-danger-tint: #f87171;
+
+  --ion-color-light: #f8fafc;
+  --ion-color-light-rgb: 248, 250, 252;
+  --ion-color-light-contrast: #0f172a;
+  --ion-color-light-shade: #e2e8f0;
+  --ion-color-light-tint: #ffffff;
+
+  --ion-color-medium: #64748b;
+  --ion-color-medium-rgb: 100, 116, 139;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-shade: #475569;
+  --ion-color-medium-tint: #94a3b8;
+
+  --ion-color-dark: #0f172a;
+  --ion-color-dark-rgb: 15, 23, 42;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-shade: #020617;
+  --ion-color-dark-tint: #1e293b;
+
+  /* Variables Semánticas Modo Claro */
+  --app-bg: #f8fafc;
+  --app-card-bg: #ffffff;
+  --app-card-border: #e2e8f0;
+  --app-card-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  --app-card-shadow-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --app-text-main: #0f172a;
+  --app-text-muted: #64748b;
+  --app-border-color: #e2e8f0;
+  --app-input-bg: #ffffff;
+  --app-input-border: #cbd5e1;
+  --app-glass-bg: rgba(255, 255, 255, 0.85);
+  --app-hover-bg: #f1f5f9;
+  --app-table-header-bg: #f1f5f9;
+  --app-badge-active-bg: rgba(16, 185, 129, 0.12);
+  --app-badge-active-text: #059669;
+}
+
+/* ====================================================================
+ * PALETA MODO OSCURO (DARK MODE) - Slate & Zinc Moderno
+ * ==================================================================== */
+html.dark-theme,
+body.dark-theme,
+.dark-theme {
+  --ion-background-color: #0b0f19;
+  --ion-background-color-rgb: 11, 15, 25;
+  --ion-text-color: #f8fafc;
+  --ion-text-color-rgb: 248, 250, 252;
+
+  --ion-card-background: #131c2e;
+  --ion-item-background: #131c2e;
+  --ion-toolbar-background: #131c2e;
+
+  --ion-color-light: #1e293b;
+  --ion-color-light-rgb: 30, 41, 59;
+  --ion-color-light-contrast: #f8fafc;
+  --ion-color-light-shade: #0f172a;
+  --ion-color-light-tint: #334155;
+
+  /* Variables Semánticas Modo Oscuro */
+  --app-bg: #0b0f19;
+  --app-card-bg: #131c2e;
+  --app-card-border: rgba(255, 255, 255, 0.08);
+  --app-card-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5);
+  --app-card-shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.7);
+  --app-text-main: #f8fafc;
+  --app-text-muted: #94a3b8;
+  --app-border-color: rgba(255, 255, 255, 0.1);
+  --app-input-bg: #1a2438;
+  --app-input-border: #2d3c54;
+  --app-glass-bg: rgba(19, 28, 46, 0.85);
+  --app-hover-bg: #1e2b42;
+  --app-table-header-bg: #0f172a;
+  --app-badge-active-bg: rgba(16, 185, 129, 0.2);
+  --app-badge-active-text: #34d399;
+}

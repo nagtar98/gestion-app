@@ -1,0 +1,95 @@
+<div class="table-responsive" tabindex="0" role="region" [attr.aria-label]="tableCaption">
+  <table class="accessible-table" role="table">
+    <caption class="sr-only">{{ tableCaption }}</caption>
+    
+    <thead role="rowgroup">
+      <tr role="row">
+        @for (col of columns; track col) {
+          <th
+            scope="col"
+            role="columnheader"
+            tabindex="0"
+            [class.text-center]="isAvatarColumn(col)"
+            class="table-th">
+            {{ getHeaderLabel(col) }}
+          </th>
+        }
+        <th scope="col" role="columnheader" class="table-th text-center">
+          Acciones
+        </th>
+      </tr>
+    </thead>
+
+    <tbody role="rowgroup">
+      <!-- Fila vacía accesible si no hay resultados -->
+      @if (dataset.length === 0) {
+        <tr role="row">
+          <td [attr.colspan]="columns.length + 1" class="empty-state text-center" role="cell">
+            <p>{{ emptyMessage }}</p>
+          </td>
+        </tr>
+      }
+
+      <!-- Filas de datos iteradas dinámicamente -->
+      @for (row of dataset; track row.id || $index; let idx = $index) {
+        <tr role="row" class="table-row">
+          @for (col of columns; track col) {
+            <td role="cell" class="table-td" [class.text-center]="isAvatarColumn(col)">
+              
+              <!-- Renderizado de Imagen / Avatar de Supabase -->
+              @if (isAvatarColumn(col)) {
+                <div class="avatar-cell-wrapper">
+                  <img
+                    [src]="row[col] || getFallbackAvatar(row.nombre)"
+                    [alt]="'Fotografía de ' + (row.nombre || 'usuario')"
+                    (error)="onAvatarError($event, row.nombre)"
+                    class="table-user-avatar"
+                    loading="lazy" />
+                </div>
+              } @else if (isStatusColumn(col)) {
+                <!-- Renderizado de Estado con Badge -->
+                <ion-badge [color]="row[col] === 'Activo' ? 'success' : 'medium'" class="status-badge">
+                  {{ row[col] }}
+                </ion-badge>
+              } @else if (isRoleColumn(col)) {
+                <!-- Renderizado de Rol con Badge -->
+                <ion-badge [color]="row[col] === 'Administrador' ? 'primary' : 'tertiary'" class="role-badge">
+                  {{ row[col] }}
+                </ion-badge>
+              } @else {
+                <span class="cell-content">{{ row[col] }}</span>
+              }
+            </td>
+          }
+
+          <td role="cell" class="table-td text-center">
+            <div class="action-buttons-group">
+              <ion-button
+                size="small"
+                fill="clear"
+                color="primary"
+                (click)="onAction(row)"
+                [attr.aria-label]="'Ver detalles de ' + (row.nombre || 'registro ' + (idx + 1))"
+                tabindex="0">
+                <ion-icon name="eye-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+              </ion-button>
+
+              @if (isAdmin) {
+                <ion-button
+                  size="small"
+                  fill="clear"
+                  color="danger"
+                  (click)="onDelete(row)"
+                  [attr.aria-label]="'Eliminar usuario ' + (row.nombre || 'registro ' + (idx + 1))"
+                  tabindex="0"
+                  class="delete-action-btn">
+                  <ion-icon name="trash-outline" slot="icon-only" aria-hidden="true"></ion-icon>
+                </ion-button>
+              }
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

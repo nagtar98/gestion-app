@@ -1,0 +1,124 @@
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--app-card-border, #e2e8f0);
+  background: var(--app-card-bg, #ffffff);
+  box-shadow: var(--app-card-shadow);
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+  
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary, #2563eb);
+    outline-offset: 2px;
+  }
+}
+
+.accessible-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.92rem;
+  color: var(--app-text-main, #0f172a);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.table-th {
+  background-color: var(--app-table-header-bg, #f8fafc);
+  color: var(--app-text-muted, #64748b);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 18px;
+  border-bottom: 2px solid var(--app-border-color, #e2e8f0);
+  white-space: nowrap;
+
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary, #2563eb);
+  }
+}
+
+.table-td {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--app-border-color, #f1f5f9);
+  vertical-align: middle;
+  color: var(--app-text-main, #0f172a);
+}
+
+.table-row {
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--app-hover-bg, #f8fafc);
+  }
+
+  &:last-child .table-td {
+    border-bottom: none;
+  }
+}
+
+.text-center {
+  text-align: center;
+}
+
+.avatar-cell-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-buttons-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.table-user-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--ion-color-primary, #2563eb);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  background-color: var(--app-hover-bg, #e2e8f0);
+}
+
+.status-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.role-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.cell-content {
+  display: inline-block;
+  font-weight: 500;
+}
+
+.empty-state {
+  padding: 48px 16px;
+  color: var(--app-text-muted, #64748b);
+  font-style: italic;
+  font-size: 0.95rem;
+}
