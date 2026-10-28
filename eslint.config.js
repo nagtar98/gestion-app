@@ -4,8 +4,16 @@ const angular = require("angular-eslint");
 
 module.exports = tseslint.config(
   {
+    ignores: [
+      "projects/**/*",
+      "dist/**/*",
+      "www/**/*",
+      ".angular/**/*",
+      "node_modules/**/*"
+    ],
+  },
+  {
     files: ["**/*.ts"],
-    ignores: ["projects/**/*"],
     extends: [...angular.configs.tsRecommended],
     processor: angular.processInlineTemplates,
     rules: {
