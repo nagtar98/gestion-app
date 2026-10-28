@@ -229,6 +229,14 @@ ion-card-subtitle {
   gap: 0.75rem;
 }
 
+.avatar-status-badge {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
 ion-input[fill="outline"],
 ion-select[fill="outline"] {
   --background: #ffffff;

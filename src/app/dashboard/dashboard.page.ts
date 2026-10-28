@@ -250,7 +250,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: ['Usuario Estandar', [Validators.required]],
       departamento: ['Desarrollo', [Validators.required]],
       estado: ['Activo', [Validators.required]],
-      avatar: ['']
+      avatar: ['', [Validators.required]]
     });
   }
 
@@ -589,14 +589,27 @@ export class DashboardPage implements OnInit, OnDestroy {
       try {
         const publicUrl = await this.supabaseService.uploadAvatar(file);
         this.createUserForm.patchValue({ avatar: publicUrl });
+        this.createUserForm.get('avatar')?.markAsDirty();
+        this.createUserForm.get('avatar')?.updateValueAndValidity();
         this.showToast('Fotografía subida exitosamente al bucket "avatars" de Supabase.');
       } catch (err: any) {
         console.warn('Aviso al subir imagen a Supabase Storage:', err);
-        this.showToast('Aviso: Verifique que el bucket "avatars" esté creado en Supabase.');
+        this.avatarUploadPreview = null;
+        this.createUserForm.patchValue({ avatar: '' });
+        this.createUserForm.get('avatar')?.markAsDirty();
+        this.createUserForm.get('avatar')?.updateValueAndValidity();
+        input.value = '';
+        const detail = err?.message || 'Error de permisos o políticas RLS en Supabase.';
+        this.showToast(`Error al subir imagen a Supabase: ${detail}`);
       } finally {
         this.isUploadingAvatar = false;
         this.cdr.markForCheck();
       }
+    } else {
+      // Entorno sin Supabase: fallback simulado para desarrollo local
+      this.createUserForm.patchValue({ avatar: this.avatarUploadPreview });
+      this.createUserForm.get('avatar')?.markAsDirty();
+      this.createUserForm.get('avatar')?.updateValueAndValidity();
     }
   }
 
@@ -626,7 +639,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: formVal.rol,
       departamento: formVal.departamento,
       estado: formVal.estado,
-      avatar: formVal.avatar?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(formVal.nombre)}&background=3880ff&color=fff`,
+      avatar: formVal.avatar.trim(),
       fechaAlta: new Date().toISOString().split('T')[0]
     };
 

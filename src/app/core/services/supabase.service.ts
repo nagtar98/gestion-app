@@ -192,7 +192,8 @@ export class SupabaseService {
       .from(this.BUCKET_NAME)
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: true
+        upsert: true,
+        contentType: file.type || 'image/png'
       });
 
     if (uploadError) {

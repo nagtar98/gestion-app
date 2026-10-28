@@ -368,16 +368,18 @@
             </ion-select>
           </div>
 
-          <!-- Fotografía de Perfil con soporte para Bucket 'avatars' de Supabase -->
+          <!-- Fotografía de Perfil con subida obligatoria desde el equipo a Supabase Storage -->
           <div class="form-group ion-margin-bottom avatar-group">
-            <ion-label class="avatar-label">Fotografía de Perfil (Supabase Storage Bucket "avatars")</ion-label>
+            <ion-label class="avatar-label">
+              Fotografía de Perfil (Subida desde el equipo) *
+            </ion-label>
 
             <div class="avatar-field-container">
               @if (avatarUploadPreview || createUserForm.get('avatar')?.value) {
                 <div class="avatar-preview-box">
                   <img
                     [src]="avatarUploadPreview || createUserForm.get('avatar')?.value"
-                    alt="Vista previa del avatar"
+                    alt="Vista previa de la fotografía"
                     class="avatar-preview-thumb" />
                 </div>
               }
@@ -386,41 +388,47 @@
                 <input
                   #avatarFileInput
                   type="file"
-                  accept="image/*"
+                  accept="image/png, image/jpeg, image/webp, image/gif"
                   (change)="onAvatarFileSelected($event)"
                   style="display: none;"
                   id="avatarFileInput" />
 
                 <ion-button
                   type="button"
-                  fill="outline"
+                  [fill]="createUserForm.get('avatar')?.value ? 'solid' : 'outline'"
                   size="small"
-                  color="secondary"
+                  [color]="createUserForm.get('avatar')?.value ? 'success' : 'primary'"
                   (click)="avatarFileInput.click()"
                   [disabled]="isUploadingAvatar">
                   @if (isUploadingAvatar) {
                     <ion-spinner name="crescent" slot="start"></ion-spinner>
+                  } @else if (createUserForm.get('avatar')?.value) {
+                    <ion-icon name="checkmark-circle-outline" slot="start" aria-hidden="true"></ion-icon>
                   } @else {
                     <ion-icon name="cloud-upload-outline" slot="start" aria-hidden="true"></ion-icon>
                   }
-                  <span>{{ isUploadingAvatar ? 'Subiendo al Bucket...' : 'Subir Imagen al Bucket avatars' }}</span>
+                  <span>
+                    {{ isUploadingAvatar ? 'Subiendo al Bucket...' : (createUserForm.get('avatar')?.value ? 'Cambiar Foto' : 'Seleccionar Foto desde el Equipo') }}
+                  </span>
                 </ion-button>
 
-                <ion-input
-                  label="O URL de la foto en Supabase Storage"
-                  labelPlacement="floating"
-                  fill="outline"
-                  type="url"
-                  formControlName="avatar"
-                  placeholder="https://...supabase.co/storage/v1/object/public/avatars/..."
-                  tabindex="6">
-                </ion-input>
+                @if (createUserForm.get('avatar')?.value) {
+                  <ion-badge color="success" class="avatar-status-badge">
+                    ✓ Imagen subida y guardada en el bucket avatars
+                  </ion-badge>
+                }
               </div>
             </div>
 
-            <ion-note color="medium" class="ion-padding-start">
-              Las imágenes se gestionan en el bucket <code>avatars</code> de Supabase. Si no se selecciona imagen, se generará un avatar accesible.
-            </ion-note>
+            @if (createUserForm.get('avatar')?.touched && createUserForm.get('avatar')?.invalid) {
+              <ion-note color="danger" class="ion-padding-start error-text">
+                Es obligatorio seleccionar y subir una fotografía desde tu equipo.
+              </ion-note>
+            } @else {
+              <ion-note color="medium" class="ion-padding-start">
+                La fotografía se subirá y guardará directamente en el bucket <code>avatars</code> de Supabase.
+              </ion-note>
+            }
           </div>
 
           <!-- Botón de Envío -->
