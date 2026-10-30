@@ -3,24 +3,10 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
   IonContent,
-  IonItem,
-  IonLabel,
-  IonInput,
-  IonText,
   IonButton,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
   IonSpinner,
-  IonIcon,
-  IonNote,
-  IonButtons
+  IonIcon
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
@@ -30,7 +16,13 @@ import {
   checkmarkCircleOutline,
   informationCircleOutline,
   sunnyOutline,
-  moonOutline
+  moonOutline,
+  sparklesOutline,
+  shieldCheckmarkOutline,
+  mailOutline,
+  keyOutline,
+  arrowForwardOutline,
+  peopleOutline
 } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -48,22 +40,10 @@ import { emailExistsValidator } from '../../core/validators/auth.validators';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
-    IonInput,
-    IonText,
     IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonCardContent,
     IonSpinner,
-    IonIcon,
-    IonNote,
-    IonButtons
+    IonIcon
   ]
 })
 export class LoginPage {
@@ -95,7 +75,13 @@ export class LoginPage {
       checkmarkCircleOutline,
       informationCircleOutline,
       sunnyOutline,
-      moonOutline
+      moonOutline,
+      sparklesOutline,
+      shieldCheckmarkOutline,
+      mailOutline,
+      keyOutline,
+      arrowForwardOutline,
+      peopleOutline
     });
 
     // Formulario de login
@@ -103,7 +89,11 @@ export class LoginPage {
       email: [
         '',
         {
-          validators: [Validators.required, Validators.email],
+          validators: [
+            Validators.required,
+            Validators.email,
+            Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+          ],
           asyncValidators: [emailExistsValidator(this.authService)],
           updateOn: 'change'
         }

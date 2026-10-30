@@ -83,23 +83,27 @@ export class DataTableComponent {
     return col.toLowerCase() === 'rol';
   }
 
+  /** URL oficial del avatar predeterminado alojado en el bucket 'avatars' de Supabase */
+  public readonly DEFAULT_AVATAR =
+    'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
+
   /**
-   * Genera un avatar accesible por iniciales si la imagen remota no está disponible o falla.
-   * @param name Nombre del usuario.
+   * Retorna el avatar predeterminado del sistema desde Supabase Storage.
+   * @param name Nombre opcional del usuario.
    */
-  public getFallbackAvatar(name: string): string {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=3880ff&color=fff&size=128`;
+  public getFallbackAvatar(name?: string): string {
+    return this.DEFAULT_AVATAR;
   }
 
   /**
-   * Maneja el error de carga de imagen asignando automáticamente el avatar de iniciales accesible.
+   * Maneja el error de carga de imagen asignando automáticamente el avatar predeterminado de Supabase.
    * @param event Evento de error emitido por el tag img.
-   * @param name Nombre del usuario para iniciales.
+   * @param name Nombre del usuario.
    */
-  public onAvatarError(event: Event, name: string): void {
+  public onAvatarError(event: Event, name?: string): void {
     const target = event.target as HTMLImageElement;
-    if (target && !target.src.includes('ui-avatars.com')) {
-      target.src = this.getFallbackAvatar(name);
+    if (target && target.src !== this.DEFAULT_AVATAR) {
+      target.src = this.DEFAULT_AVATAR;
     }
   }
 }

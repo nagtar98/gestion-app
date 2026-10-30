@@ -15,8 +15,8 @@ export function emailExistsValidator(authService: AuthService): AsyncValidatorFn
       return of(null);
     }
 
-    // Si el formato aún no es un email válido básico, diferir
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validar formato completo con dominio antes de consultar
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(value)) {
       return of(null);
     }
@@ -47,7 +47,7 @@ export function emailUniqueValidator(authService: AuthService): AsyncValidatorFn
       return of(null);
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(value)) {
       return of(null);
     }

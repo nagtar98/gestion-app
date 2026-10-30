@@ -74,6 +74,7 @@ import { AuthService } from '../core/services/auth.service';
 import { ExportService } from '../core/services/export.service';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
+import { HelpService } from '../core/services/help.service';
 import { UserRecord, DepartmentMetric, MetricSummary } from '../core/models/user.model';
 import { emailUniqueValidator } from '../core/validators/auth.validators';
 
@@ -127,6 +128,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private exportService = inject(ExportService);
   private supabaseService = inject(SupabaseService);
+  public helpService = inject(HelpService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private alertController = inject(AlertController);
@@ -141,6 +143,10 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   /** Vista previa en base64 de la fotografía seleccionada */
   public avatarUploadPreview: string | null = null;
+
+  /** URL oficial del avatar predeterminado alojado en el bucket 'avatars' de Supabase */
+  public readonly DEFAULT_AVATAR_URL =
+    'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
 
   /** Indicador global de carga asíncrona */
   public isLoading: boolean = true;
@@ -199,8 +205,13 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Valores para el widget estadístico de roles */
   public roleChartValues: number[] = [0, 0];
 
-  /** Control de visibilidad del modal de Ayuda / Manual de Usuario embebido */
-  public isHelpModalOpen: boolean = false;
+  /** Control de visibilidad del modal de Ayuda / Guía de usuario */
+  public get isHelpModalOpen(): boolean {
+    return this.helpService.isHelpModalOpen();
+  }
+  public set isHelpModalOpen(val: boolean) {
+    this.helpService.isHelpModalOpen.set(val);
+  }
 
   /** Mensaje informativo desplegado en el ion-toast */
   public toastMessage: string = '';
@@ -308,7 +319,11 @@ export class DashboardPage implements OnInit, OnDestroy {
       email: [
         '',
         {
-          validators: [Validators.required, Validators.email],
+          validators: [
+            Validators.required,
+            Validators.email,
+            Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+          ],
           asyncValidators: [emailUniqueValidator(this.authService)],
           updateOn: 'change'
         }
@@ -316,7 +331,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: ['Usuario Estandar', [Validators.required]],
       departamento: ['Desarrollo', [Validators.required]],
       estado: ['Activo', [Validators.required]],
-      avatar: ['', [Validators.required]]
+      avatar: [this.DEFAULT_AVATAR_URL]
     });
   }
 
@@ -542,7 +557,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   /**
    * Exporta la tabla a formato PDF (solo Administrador).
    */
-  public exportToPdf(): void {
+  public async exportToPdf(): Promise<void> {
     if (!this.isAdmin) {
       this.showToast('Acción restringida: Solo el Administrador puede exportar informes.');
       return;
@@ -555,7 +570,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       const pdfColumns = ['nombre', 'email', 'rol', 'departamento', 'estado'];
       const pdfHeaders = ['Nombre Completo', 'Correo Electrónico', 'Rol de Acceso', 'Departamento', 'Estado'];
 
-      this.exportService.exportTableToPdf({
+      await this.exportService.exportTableToPdf({
         title: 'Listado de Usuarios',
         subtitle: `Filtro aplicado: ${this.selectedDepartment} | Total registros: ${this.filteredUsers.length}`,
         headers: pdfHeaders,
@@ -745,7 +760,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: 'Usuario Estandar',
       departamento: 'Desarrollo',
       estado: 'Activo',
-      avatar: ''
+      avatar: this.DEFAULT_AVATAR_URL
     });
     this.isCreateModalOpen = true;
     this.cdr.markForCheck();
@@ -793,7 +808,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       } catch (err: any) {
         console.warn('Aviso al subir imagen a Supabase Storage:', err);
         this.avatarUploadPreview = null;
-        this.createUserForm.patchValue({ avatar: '' });
+        this.createUserForm.patchValue({ avatar: this.DEFAULT_AVATAR_URL });
         this.createUserForm.get('avatar')?.markAsDirty();
         this.createUserForm.get('avatar')?.updateValueAndValidity();
         input.value = '';
@@ -837,7 +852,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: formVal.rol,
       departamento: formVal.departamento,
       estado: formVal.estado,
-      avatar: formVal.avatar.trim(),
+      avatar: (formVal.avatar && formVal.avatar.trim() !== '') ? formVal.avatar.trim() : this.DEFAULT_AVATAR_URL,
       fechaAlta: new Date().toISOString().split('T')[0]
     };
 
@@ -864,6 +879,16 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   /**
+   * Manejador de error de carga para reemplazar imágenes fallidas por el avatar predeterminado de Supabase.
+   */
+  public onAvatarFallbackError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.src !== this.DEFAULT_AVATAR_URL) {
+      target.src = this.DEFAULT_AVATAR_URL;
+    }
+  }
+
+  /**
    * Comprueba si la validación asíncrona de email está pendiente en el alta.
    */
   public get isNewEmailValidating(): boolean {
@@ -875,7 +900,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Abre el modal de ayuda con la guía de usuario.
    */
   public openHelpModal(): void {
-    this.isHelpModalOpen = true;
+    this.helpService.openHelp();
     this.cdr.markForCheck();
   }
 
@@ -883,7 +908,7 @@ export class DashboardPage implements OnInit, OnDestroy {
    * Cierra el modal de Ayuda / Manual de Usuario.
    */
   public closeHelpModal(): void {
-    this.isHelpModalOpen = false;
+    this.helpService.closeHelp();
     this.cdr.markForCheck();
   }
 

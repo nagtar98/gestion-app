@@ -22,6 +22,10 @@ export interface SupabaseConfig {
 export class DataService {
   private supabaseService = inject(SupabaseService);
 
+  /** URL oficial del avatar predeterminado en el bucket 'avatars' de Supabase */
+  public readonly DEFAULT_AVATAR_URL =
+    'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
+
   /**
    * Lista local de usuarios con avatares.
    */
@@ -242,12 +246,15 @@ export class DataService {
    * @returns Observable con el usuario insertado.
    */
   public createUser(newUser: Omit<UserRecord, 'id'>): Observable<UserRecord> {
+    const avatar = (newUser.avatar && newUser.avatar.trim() !== '') ? newUser.avatar.trim() : this.DEFAULT_AVATAR_URL;
+    const userToCreate = { ...newUser, avatar };
+
     if (this.supabaseService.isConfigured()) {
-      return from(this.supabaseService.createUser(newUser)).pipe(
+      return from(this.supabaseService.createUser(userToCreate)).pipe(
         catchError(err => {
           console.warn('Fallo al dar de alta en Supabase, registrando en memoria local:', err);
           const nextId = Math.max(...this.mockSqlUsers.map(u => u.id), 0) + 1;
-          const localRecord: UserRecord = { id: nextId, ...newUser };
+          const localRecord: UserRecord = { id: nextId, ...userToCreate };
           this.mockSqlUsers.push(localRecord);
           return of(localRecord);
         })
@@ -255,7 +262,7 @@ export class DataService {
     }
 
     const nextId = Math.max(...this.mockSqlUsers.map(u => u.id), 0) + 1;
-    const localRecord: UserRecord = { id: nextId, ...newUser };
+    const localRecord: UserRecord = { id: nextId, ...userToCreate };
     this.mockSqlUsers.push(localRecord);
     return of(localRecord).pipe(delay(400));
   }

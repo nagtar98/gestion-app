@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 /**
  * Opciones para la exportación de tablas a formato PDF.
@@ -33,8 +31,14 @@ export class ExportService {
 
   /**
    * Genera y descarga un documento PDF con los datos y métricas indicados.
+   * Carga dinámica de jsPDF y autoTable bajo demanda para optimizar bundle inicial y Lighthouse.
    */
-  public exportTableToPdf(options: PdfExportOptions): void {
+  public async exportTableToPdf(options: PdfExportOptions): Promise<void> {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable')
+    ]);
+
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
