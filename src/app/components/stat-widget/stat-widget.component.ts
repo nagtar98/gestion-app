@@ -12,12 +12,43 @@ import {
   effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Chart, registerables } from 'chart.js';
+import {
+  Chart,
+  LineController,
+  DoughnutController,
+  PieController,
+  PolarAreaController,
+  CategoryScale,
+  LinearScale,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular';
 import { ThemeService } from '../../core/services/theme.service';
 
-// Registro global de controladores, escalas y elementos de Chart.js
-Chart.register(...registerables);
+// Registro selectivo optimizado para Tree-Shaking y reducción de TBT/Lighthouse
+Chart.register(
+  LineController,
+  DoughnutController,
+  PieController,
+  PolarAreaController,
+  CategoryScale,
+  LinearScale,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 /**
  * Componente para renderizar gráficos con Chart.js.

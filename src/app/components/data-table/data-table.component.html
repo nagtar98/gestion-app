@@ -44,6 +44,8 @@
                     [alt]="'Fotografía de ' + (row.nombre || 'usuario')"
                     (error)="onAvatarError($event, row.nombre)"
                     class="table-user-avatar"
+                    width="36"
+                    height="36"
                     loading="lazy" />
                 </div>
               } @else if (isStatusColumn(col)) {

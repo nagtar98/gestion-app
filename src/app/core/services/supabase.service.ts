@@ -13,6 +13,13 @@ export class SupabaseService {
   /** Nombre del bucket de almacenamiento para imágenes de avatar */
   public readonly BUCKET_NAME = 'avatars';
 
+  /** Nombre del archivo de avatar por defecto en el bucket */
+  public readonly DEFAULT_AVATAR_FILENAME = 'user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
+
+  /** URL pública directa del avatar por defecto almacenado en el bucket de Supabase */
+  public readonly DEFAULT_AVATAR_URL =
+    'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
+
   /** Instancia oficial del cliente de Supabase */
   private supabase: SupabaseClient | null = null;
 
@@ -79,7 +86,7 @@ export class SupabaseService {
       rol: (row.rol || 'Usuario Estandar') as UserRole,
       departamento: String(row.departamento || 'General'),
       estado: (row.estado || 'Activo') as 'Activo' | 'Inactivo',
-      avatar: row.avatar_url || row.avatar || this.getAvatarFallback(row.nombre),
+      avatar: row.avatar_url || row.avatar || this.DEFAULT_AVATAR_URL,
       fechaAlta: row.fecha_alta || row.fechaAlta || new Date().toISOString().split('T')[0]
     }));
   }
@@ -139,7 +146,7 @@ export class SupabaseService {
       throw new Error('Supabase no está configurado.');
     }
 
-    const avatarUrl = user.avatar || this.getAvatarFallback(user.nombre);
+    const avatarUrl = (user.avatar && user.avatar.trim() !== '') ? user.avatar : this.DEFAULT_AVATAR_URL;
 
     const { data, error } = await this.supabase
       .from('usuarios')
@@ -243,10 +250,10 @@ export class SupabaseService {
   }
 
   /**
-   * Retorna un avatar gráfico de respaldo basado en iniciales.
-   * @param name Nombre del usuario.
+   * Retorna el avatar predeterminado oficial de Supabase Storage.
+   * @param name Nombre opcional del usuario.
    */
-  public getAvatarFallback(name: string): string {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'U')}&background=2563eb&color=fff&size=128`;
+  public getAvatarFallback(name?: string): string {
+    return this.DEFAULT_AVATAR_URL;
   }
 }

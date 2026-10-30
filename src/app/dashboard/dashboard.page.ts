@@ -144,6 +144,10 @@ export class DashboardPage implements OnInit, OnDestroy {
   /** Vista previa en base64 de la fotografía seleccionada */
   public avatarUploadPreview: string | null = null;
 
+  /** URL oficial del avatar predeterminado alojado en el bucket 'avatars' de Supabase */
+  public readonly DEFAULT_AVATAR_URL =
+    'https://nembeporhkhneggqrtli.supabase.co/storage/v1/object/public/avatars/user-icon-person-icon-client-symbol-profile-icon-vector.jpg';
+
   /** Indicador global de carga asíncrona */
   public isLoading: boolean = true;
 
@@ -327,7 +331,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: ['Usuario Estandar', [Validators.required]],
       departamento: ['Desarrollo', [Validators.required]],
       estado: ['Activo', [Validators.required]],
-      avatar: ['', [Validators.required]]
+      avatar: [this.DEFAULT_AVATAR_URL]
     });
   }
 
@@ -553,7 +557,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   /**
    * Exporta la tabla a formato PDF (solo Administrador).
    */
-  public exportToPdf(): void {
+  public async exportToPdf(): Promise<void> {
     if (!this.isAdmin) {
       this.showToast('Acción restringida: Solo el Administrador puede exportar informes.');
       return;
@@ -566,7 +570,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       const pdfColumns = ['nombre', 'email', 'rol', 'departamento', 'estado'];
       const pdfHeaders = ['Nombre Completo', 'Correo Electrónico', 'Rol de Acceso', 'Departamento', 'Estado'];
 
-      this.exportService.exportTableToPdf({
+      await this.exportService.exportTableToPdf({
         title: 'Listado de Usuarios',
         subtitle: `Filtro aplicado: ${this.selectedDepartment} | Total registros: ${this.filteredUsers.length}`,
         headers: pdfHeaders,
@@ -756,7 +760,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: 'Usuario Estandar',
       departamento: 'Desarrollo',
       estado: 'Activo',
-      avatar: ''
+      avatar: this.DEFAULT_AVATAR_URL
     });
     this.isCreateModalOpen = true;
     this.cdr.markForCheck();
@@ -804,7 +808,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       } catch (err: any) {
         console.warn('Aviso al subir imagen a Supabase Storage:', err);
         this.avatarUploadPreview = null;
-        this.createUserForm.patchValue({ avatar: '' });
+        this.createUserForm.patchValue({ avatar: this.DEFAULT_AVATAR_URL });
         this.createUserForm.get('avatar')?.markAsDirty();
         this.createUserForm.get('avatar')?.updateValueAndValidity();
         input.value = '';
@@ -848,7 +852,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       rol: formVal.rol,
       departamento: formVal.departamento,
       estado: formVal.estado,
-      avatar: formVal.avatar.trim(),
+      avatar: (formVal.avatar && formVal.avatar.trim() !== '') ? formVal.avatar.trim() : this.DEFAULT_AVATAR_URL,
       fechaAlta: new Date().toISOString().split('T')[0]
     };
 
@@ -872,6 +876,16 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  /**
+   * Manejador de error de carga para reemplazar imágenes fallidas por el avatar predeterminado de Supabase.
+   */
+  public onAvatarFallbackError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.src !== this.DEFAULT_AVATAR_URL) {
+      target.src = this.DEFAULT_AVATAR_URL;
+    }
   }
 
   /**
